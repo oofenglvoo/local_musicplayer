@@ -8,6 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Bridges PlayerConnection with persisted state: play tracking, queue resume,
@@ -40,10 +41,13 @@ class PlaybackCoordinator(
         val skipSilence = settingsStore.skipSilence.first()
         val crossfade = settingsStore.crossfadeMs.first()
         val rgMode = ReplayGainMode.from(settingsStore.replayGainMode.first())
-        PlayerConnection.setSpeed(speed)
-        PlayerConnection.setSkipSilence(skipSilence)
-        PlayerConnection.crossfade.setCrossfadeMs(crossfade)
-        ReplayGainManager.setMode(rgMode)
+        // Player/controller access must happen on the main thread.
+        withContext(Dispatchers.Main) {
+            PlayerConnection.setSpeed(speed)
+            PlayerConnection.setSkipSilence(skipSilence)
+            PlayerConnection.crossfade.setCrossfadeMs(crossfade)
+            ReplayGainManager.setMode(rgMode)
+        }
     }
 
     fun suspendApplySettings() {
@@ -59,8 +63,10 @@ class PlaybackCoordinator(
     }
 
     suspend fun persistQueue() {
-        val snap = PlayerConnection.snapshotForPersistence()
-        if (snap == null) return
+        // Snapshot requires MediaController access on the main thread.
+        val snap = withContext(Dispatchers.Main) {
+            PlayerConnection.snapshotForPersistence()
+        } ?: return
         runCatching {
             repository.saveQueueState(
                 songIds = snap.songIds,
@@ -78,13 +84,16 @@ class PlaybackCoordinator(
         val songs = ids.mapNotNull { repository.getSong(it) }
         if (songs.isEmpty()) return
         val index = ids.indexOf(state.songId).coerceAtLeast(0)
-        PlayerConnection.restore(
-            songs = songs,
-            index = index,
-            positionMs = state.positionMs,
-            shuffle = state.shuffleMode == 1,
-            repeat = state.repeatMode,
-        )
+        // Controller access must happen on the main thread.
+        withContext(Dispatchers.Main) {
+            PlayerConnection.restore(
+                songs = songs,
+                index = index,
+                positionMs = state.positionMs,
+                shuffle = state.shuffleMode == 1,
+                repeat = state.repeatMode,
+            )
+        }
     }
 
     fun saveNow() {

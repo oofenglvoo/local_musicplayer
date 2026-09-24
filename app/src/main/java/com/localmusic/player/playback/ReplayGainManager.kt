@@ -10,7 +10,8 @@ import kotlinx.coroutines.withContext
 
 object ReplayGainManager {
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private var processor: ReplayGainProcessor? = null
     private var player: ExoPlayer? = null
@@ -27,10 +28,16 @@ object ReplayGainManager {
 
     fun setMode(newMode: ReplayGainMode) {
         mode = newMode
-        player?.let { applyForCurrent(it) }
+        // Player access must happen on the main thread.
+        scope.launch { player?.let { applyForCurrent(it) } }
     }
 
     fun applyForCurrent(exoPlayer: ExoPlayer) {
+        // ExoPlayer must be accessed on the application (main) thread.
+        if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) {
+            scope.launch { applyForCurrent(exoPlayer) }
+            return
+        }
         val path = exoPlayer.currentMediaItem?.localConfiguration?.uri?.path ?: run {
             processor?.setGainDb(0f)
             return
@@ -39,7 +46,7 @@ object ReplayGainManager {
             processor?.setGainDb(0f)
             return
         }
-        scope.launch {
+        ioScope.launch {
             val info = cache.getOrPut(path) { ReplayGainReader.read(path) }
             val gain = computeGain(info)
             processor?.setGainDb(gain)
