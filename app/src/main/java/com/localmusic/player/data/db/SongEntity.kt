@@ -19,4 +19,8 @@ data class SongEntity(
     val displayName: String,
     val mimeType: String,
     val artworkPath: String? = null,
+    val year: Int = 0,
+    val discNumber: Int = 0,
+    val playCount: Int = 0,
+    val lastPlayedAt: Long = 0L,
 )

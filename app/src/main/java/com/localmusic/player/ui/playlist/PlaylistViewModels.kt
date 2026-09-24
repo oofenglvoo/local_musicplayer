@@ -43,6 +43,23 @@ class PlaylistDetailViewModel @Inject constructor(
         if (list.isNotEmpty()) PlayerConnection.playSongs(list, 0)
     }
 
+    fun shufflePlay() {
+        val list = songs.value
+        if (list.isNotEmpty()) PlayerConnection.playSongsShuffled(list)
+    }
+
+    fun removeFromPlaylist(songId: Long) {
+        viewModelScope.launch { repository.removeFromPlaylist(playlistId, songId) }
+    }
+
+    fun move(from: Int, to: Int) {
+        val list = songs.value.toMutableList()
+        if (from !in list.indices || to !in list.indices) return
+        val item = list.removeAt(from)
+        list.add(to, item)
+        viewModelScope.launch { repository.reorderPlaylist(playlistId, list.map { it.id }) }
+    }
+
     fun toggleFavorite(songId: Long) {
         viewModelScope.launch { repository.toggleFavorite(songId) }
     }

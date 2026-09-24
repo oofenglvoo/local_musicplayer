@@ -39,9 +39,28 @@ interface PlaylistDao {
     @Query("SELECT EXISTS(SELECT 1 FROM playlist_songs WHERE playlistId = :playlistId AND songId = :songId)")
     suspend fun containsSong(playlistId: Long, songId: Long): Boolean
 
+    @Query("UPDATE playlist_songs SET position = :position WHERE playlistId = :playlistId AND songId = :songId")
+    suspend fun updatePosition(playlistId: Long, songId: Long, position: Int)
+
+    @Transaction
+    suspend fun reorder(playlistId: Long, orderedSongIds: List<Long>) {
+        orderedSongIds.forEachIndexed { index, songId ->
+            updatePosition(playlistId, songId, index)
+        }
+    }
+
     @Transaction
     suspend fun addSong(playlistId: Long, songId: Long) {
         insertCrossRef(PlaylistSongCrossRef(playlistId, songId, nextPosition(playlistId)))
+    }
+
+    @Transaction
+    suspend fun addSongs(playlistId: Long, songIds: List<Long>) {
+        var pos = nextPosition(playlistId)
+        songIds.forEach { songId ->
+            insertCrossRef(PlaylistSongCrossRef(playlistId, songId, pos))
+            pos += 1
+        }
     }
 }
 

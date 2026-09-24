@@ -11,7 +11,11 @@ import java.io.File
 
 object MediaStoreScanner {
 
-    suspend fun scan(context: Context): List<SongEntity> = withContext(Dispatchers.IO) {
+    suspend fun scan(
+        context: Context,
+        excludedFolders: Set<String> = emptySet(),
+        minDurationSec: Int = 0,
+    ): List<SongEntity> = withContext(Dispatchers.IO) {
         val songs = mutableListOf<SongEntity>()
         val collection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
@@ -32,9 +36,12 @@ object MediaStoreScanner {
             MediaStore.Audio.Media.DATE_ADDED,
             MediaStore.Audio.Media.DISPLAY_NAME,
             MediaStore.Audio.Media.MIME_TYPE,
+            MediaStore.Audio.Media.YEAR,
         )
 
         val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0 AND ${MediaStore.Audio.Media.DURATION} > 0"
+
+        val excluded = excludedFolders.map { it.trimEnd('/') }.toSet()
 
         context.contentResolver.query(
             collection,
@@ -55,9 +62,18 @@ object MediaStoreScanner {
             val dateCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED)
             val nameCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
             val mimeCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)
+            val yearCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)
 
             while (cursor.moveToNext()) {
+                val path = cursor.getString(dataCol) ?: ""
+                if (excluded.isNotEmpty() && excluded.any { path == it || path.startsWith("$it/") }) {
+                    continue
+                }
+                val duration = cursor.getLong(durationCol)
+                if (duration < minDurationSec * 1000L) continue
+
                 val artist = cursor.getString(artistCol)
+                val rawTrack = cursor.getInt(trackCol)
                 songs += SongEntity(
                     id = cursor.getLong(idCol),
                     title = cursor.getString(titleCol) ?: "未知歌曲",
@@ -65,13 +81,15 @@ object MediaStoreScanner {
                     album = cursor.getString(albumCol) ?: "未知专辑",
                     albumId = cursor.getLong(albumIdCol),
                     artistId = 0L,
-                    duration = cursor.getLong(durationCol),
-                    path = cursor.getString(dataCol) ?: "",
-                    trackNumber = cursor.getInt(trackCol),
+                    duration = duration,
+                    path = path,
+                    trackNumber = if (rawTrack > 1000) rawTrack % 1000 else rawTrack,
                     size = cursor.getLong(sizeCol),
                     dateAdded = cursor.getLong(dateCol),
                     displayName = cursor.getString(nameCol) ?: "",
                     mimeType = cursor.getString(mimeCol) ?: "",
+                    year = cursor.getInt(yearCol),
+                    discNumber = if (rawTrack > 1000) rawTrack / 1000 else 0,
                 )
             }
         }

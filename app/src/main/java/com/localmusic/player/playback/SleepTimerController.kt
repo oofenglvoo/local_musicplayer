@@ -24,11 +24,17 @@ object SleepTimerController {
     private val _active = MutableStateFlow(false)
     val active: StateFlow<Boolean> = _active.asStateFlow()
 
+    private val _remainingTracks = MutableStateFlow(0)
+    val remainingTracks: StateFlow<Int> = _remainingTracks.asStateFlow()
+
+    private var trackMode = false
+
     val fadeEnabled: Boolean get() = fadeOut
 
     fun start(minutes: Int, fadeOutEnabled: Boolean = true) {
         cancel()
         fadeOut = fadeOutEnabled
+        trackMode = false
         endTimeMs = System.currentTimeMillis() + minutes * 60_000L
         _active.value = true
         job = scope.launch {
@@ -43,11 +49,36 @@ object SleepTimerController {
         }
     }
 
+    fun startByTracks(count: Int, fadeOutEnabled: Boolean = true) {
+        cancel()
+        if (count <= 0) return
+        fadeOut = fadeOutEnabled
+        trackMode = true
+        _remainingTracks.value = count
+        _active.value = true
+    }
+
+    fun onTrackFinished() {
+        if (!trackMode || !_active.value) return
+        val remaining = _remainingTracks.value - 1
+        _remainingTracks.value = remaining.coerceAtLeast(0)
+        if (remaining <= 0) {
+            scope.launch {
+                if (fadeOut) fadeOutAndPause()
+                PlayerConnection.controller()?.pause()
+                _active.value = false
+                trackMode = false
+            }
+        }
+    }
+
     fun cancel() {
         job?.cancel()
         job = null
         _active.value = false
         _remainingMs.value = 0L
+        _remainingTracks.value = 0
+        trackMode = false
     }
 
     private suspend fun fadeOutAndPause() {

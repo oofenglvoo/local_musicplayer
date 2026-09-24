@@ -77,7 +77,10 @@ class FolderBrowserViewModel @Inject constructor(
     fun removeFolder(path: String) {
         _scanning.value = true
         viewModelScope.launch {
-            runCatching { repository.removeFolder(path) }
+            runCatching {
+                repository.removeFolder(path)
+                repository.refreshLibrary()
+            }
             _scanning.value = false
             _message.value = "已移除目录并更新音乐库"
         }

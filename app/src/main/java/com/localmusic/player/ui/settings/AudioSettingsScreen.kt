@@ -7,10 +7,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.localmusic.player.playback.ReplayGainMode
 import com.localmusic.player.playback.SleepTimerController
 
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
@@ -44,6 +47,11 @@ fun AudioSettingsScreen(
     val effects by viewModel.effectsState.collectAsStateWithLifecycle()
     val sleepActive by SleepTimerController.active.collectAsStateWithLifecycle()
     val sleepRemaining by SleepTimerController.remainingMs.collectAsStateWithLifecycle()
+    val remainingTracks by SleepTimerController.remainingTracks.collectAsStateWithLifecycle()
+    val speed by viewModel.playbackSpeed.collectAsStateWithLifecycle()
+    val skipSilence by viewModel.skipSilence.collectAsStateWithLifecycle()
+    val crossfadeMs by viewModel.crossfadeMs.collectAsStateWithLifecycle()
+    val replayGain by viewModel.replayGainMode.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -65,6 +73,66 @@ fun AudioSettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            Text("播放速度", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "当前 ${"%.2f".format(speed)}x",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Slider(
+                value = speed,
+                onValueChange = { viewModel.setSpeed(it) },
+                valueRange = 0.5f..2.0f,
+                steps = 5,
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column {
+                    Text("跳过静音", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "自动跳过音频中的静音片段",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Switch(
+                    checked = skipSilence,
+                    onCheckedChange = { viewModel.setSkipSilence(it) },
+                )
+            }
+
+            Text("交叉淡入淡出", style = MaterialTheme.typography.titleMedium)
+            Text(
+                if (crossfadeMs == 0) "关闭" else "${crossfadeMs} ms",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Slider(
+                value = crossfadeMs.toFloat(),
+                onValueChange = { viewModel.setCrossfade(it.toInt()) },
+                valueRange = 0f..10000f,
+                steps = 19,
+            )
+
+            Text("ReplayGain 音量归一化", style = MaterialTheme.typography.titleMedium)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ReplayGainMode.entries.forEach { mode ->
+                    AssistChip(
+                        onClick = { viewModel.setReplayGain(mode) },
+                        label = { Text(mode.label) },
+                        leadingIcon = if (replayGain == mode) {
+                            { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                        } else null,
+                    )
+                }
+            }
+
+            HorizontalDivider()
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -154,7 +222,8 @@ fun AudioSettingsScreen(
             Text("睡眠定时", style = MaterialTheme.typography.titleMedium)
             if (sleepActive) {
                 Text(
-                    "剩余 ${formatMs(sleepRemaining)}，到点自动暂停",
+                    if (remainingTracks > 0) "剩余 $remainingTracks 首后暂停"
+                    else "剩余 ${formatMs(sleepRemaining)}，到点自动暂停",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -162,11 +231,21 @@ fun AudioSettingsScreen(
                     Text("取消定时")
                 }
             } else {
+                Text("按分钟", style = MaterialTheme.typography.labelLarge)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(15, 30, 45, 60).forEach { minutes ->
                         AssistChip(
                             onClick = { viewModel.startSleepTimer(minutes) },
                             label = { Text("$minutes 分钟") },
+                        )
+                    }
+                }
+                Text("按曲数", style = MaterialTheme.typography.labelLarge)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(1, 3, 5, 10).forEach { count ->
+                        AssistChip(
+                            onClick = { viewModel.startSleepTimerByTracks(count) },
+                            label = { Text("$count 首") },
                         )
                     }
                 }

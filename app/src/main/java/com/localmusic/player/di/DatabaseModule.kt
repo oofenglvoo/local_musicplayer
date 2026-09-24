@@ -2,9 +2,14 @@ package com.localmusic.player.di
 
 import android.content.Context
 import androidx.room.Room
+import com.localmusic.player.data.MusicRepository
+import com.localmusic.player.data.SettingsStore
+import com.localmusic.player.data.db.BookmarkDao
 import com.localmusic.player.data.db.FavoriteDao
 import com.localmusic.player.data.db.MusicDatabase
+import com.localmusic.player.data.db.PlayHistoryDao
 import com.localmusic.player.data.db.PlaylistDao
+import com.localmusic.player.data.db.QueueDao
 import com.localmusic.player.data.db.SongDao
 import dagger.Module
 import dagger.Provides
@@ -32,4 +37,22 @@ object DatabaseModule {
 
     @Provides
     fun provideFavoriteDao(db: MusicDatabase): FavoriteDao = db.favoriteDao()
+
+    @Provides
+    fun provideQueueDao(db: MusicDatabase): QueueDao = db.queueDao()
+
+    @Provides
+    fun providePlayHistoryDao(db: MusicDatabase): PlayHistoryDao = db.playHistoryDao()
+
+    @Provides
+    fun provideBookmarkDao(db: MusicDatabase): BookmarkDao = db.bookmarkDao()
+
+    @Provides
+    @Singleton
+    fun providePlaybackCoordinator(
+        @ApplicationContext context: Context,
+        repository: MusicRepository,
+        settingsStore: SettingsStore,
+    ): com.localmusic.player.playback.PlaybackCoordinator =
+        com.localmusic.player.playback.PlaybackCoordinator(context, repository, settingsStore)
 }

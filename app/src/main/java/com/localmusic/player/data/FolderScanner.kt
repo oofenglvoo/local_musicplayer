@@ -17,30 +17,46 @@ object FolderScanner {
     fun isAudioFile(file: File): Boolean =
         file.isFile && file.extension.lowercase() in AUDIO_EXTENSIONS
 
-    suspend fun scanDirectory(context: Context, root: File): List<SongEntity> =
-        withContext(Dispatchers.IO) {
-            val result = mutableListOf<SongEntity>()
-            val stack = ArrayDeque<File>()
-            if (root.isDirectory) stack.add(root)
+    suspend fun scanDirectory(
+        context: Context,
+        root: File,
+        excludedFolders: Set<String> = emptySet(),
+        minDurationSec: Int = 0,
+    ): List<SongEntity> = withContext(Dispatchers.IO) {
+        val result = mutableListOf<SongEntity>()
+        val stack = ArrayDeque<File>()
+        if (root.isDirectory) stack.add(root)
 
-            var syntheticId = -1_000_000L
+        val excluded = excludedFolders.map { it.trimEnd('/') }.toSet()
 
-            while (stack.isNotEmpty()) {
-                val dir = stack.removeLast()
-                val children = dir.listFiles() ?: continue
-                for (child in children) {
-                    when {
-                        child.isDirectory -> {
-                            if (!child.name.startsWith(".")) stack.add(child)
+        var syntheticId = -1_000_000L
+
+        while (stack.isNotEmpty()) {
+            val dir = stack.removeLast()
+            val children = dir.listFiles() ?: continue
+            for (child in children) {
+                when {
+                    child.isDirectory -> {
+                        if (!child.name.startsWith(".") && !isExcluded(child, excluded)) {
+                            stack.add(child)
                         }
-                        isAudioFile(child) -> {
-                            result += readMetadata(context, child, syntheticId--)
+                    }
+                    isAudioFile(child) -> {
+                        val song = readMetadata(context, child, syntheticId--)
+                        if (song.duration >= minDurationSec * 1000L) {
+                            result += song
                         }
                     }
                 }
             }
-            result
         }
+        result
+    }
+
+    private fun isExcluded(dir: File, excluded: Set<String>): Boolean {
+        val path = dir.absolutePath
+        return excluded.any { path == it || path.startsWith("$it/") }
+    }
 
     private suspend fun readMetadata(
         context: Context,
@@ -52,6 +68,8 @@ object FolderScanner {
         var album = "未知专辑"
         var duration = 0L
         var track = 0
+        var year = 0
+        var disc = 0
 
         val retriever = MediaMetadataRetriever()
         try {
@@ -66,6 +84,10 @@ object FolderScanner {
                 ?.toLongOrNull()?.let { duration = it }
             retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER)
                 ?.substringBefore('/')?.trim()?.toIntOrNull()?.let { track = it }
+            retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_YEAR)
+                ?.substringBefore('-')?.trim()?.toIntOrNull()?.let { year = it }
+            retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DISC_NUMBER)
+                ?.substringBefore('/')?.trim()?.toIntOrNull()?.let { disc = it }
         } catch (_: Exception) {
         } finally {
             runCatching { retriever.release() }
@@ -91,6 +113,8 @@ object FolderScanner {
             displayName = file.name,
             mimeType = mimeForExtension(file.extension.lowercase()),
             artworkPath = artworkPath,
+            year = year,
+            discNumber = disc,
         )
     }
 

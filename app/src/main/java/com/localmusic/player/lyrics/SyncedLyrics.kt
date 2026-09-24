@@ -1,5 +1,8 @@
 package com.localmusic.player.lyrics
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +24,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -73,6 +78,25 @@ fun SyncedLyrics(
     ) {
         itemsIndexed(lyrics.lines) { index, line ->
             val isCurrent = index == currentIndex
+            val color by animateColorAsState(
+                targetValue = if (isCurrent) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                animationSpec = tween(400),
+                label = "lyricColor",
+            )
+            val scale by animateFloatAsState(
+                targetValue = if (isCurrent) 1.06f else 1f,
+                animationSpec = tween(400),
+                label = "lyricScale",
+            )
+            val alpha by animateFloatAsState(
+                targetValue = if (isCurrent) 1f else 0.6f,
+                animationSpec = tween(400),
+                label = "lyricAlpha",
+            )
             Text(
                 text = line.text.ifBlank { "♪" },
                 style = if (isCurrent) {
@@ -81,14 +105,11 @@ fun SyncedLyrics(
                     MaterialTheme.typography.bodyLarge
                 },
                 fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
-                color = if (isCurrent) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
+                color = color.copy(alpha = alpha),
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .scale(scale)
                     .padding(horizontal = 24.dp),
             )
         }
