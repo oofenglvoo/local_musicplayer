@@ -112,8 +112,10 @@ fun SongsTab(
             EmptyHint(if (songs.isEmpty()) "未发现本地音乐，点击右上角扫描目录" else "没有匹配的歌曲")
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentPadding = PaddingValues(bottom = 24.dp),
             ) {
                 itemsIndexed(displayed, key = { _, s -> s.id }) { index, song ->
                     val selectionMode = selection?.enabled == true
