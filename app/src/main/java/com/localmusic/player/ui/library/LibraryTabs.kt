@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
@@ -82,6 +83,31 @@ fun SongsTab(
                 )
             }
         }
+        Text(
+            "快速入口",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+        )
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            items(AutoList.entries) { list ->
+                androidx.compose.material3.ElevatedCard(
+                    modifier = Modifier.size(width = 142.dp, height = 82.dp).clickable { onOpenAutoList(list) },
+                ) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                        Text(list.label, style = MaterialTheme.typography.titleSmall)
+                        Text("浏览并播放", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+        }
+        Text(
+            "全部歌曲",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+        )
         if (displayed.isEmpty()) {
             EmptyHint(if (songs.isEmpty()) "未发现本地音乐，点击右上角扫描目录" else "没有匹配的歌曲")
         } else {

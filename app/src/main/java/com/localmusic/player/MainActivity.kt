@@ -20,6 +20,9 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -54,6 +57,7 @@ import com.localmusic.player.ui.settings.SettingsScreen
 import com.localmusic.player.ui.settings.ThemeSettingsScreen
 import com.localmusic.player.ui.search.SearchScreen
 import com.localmusic.player.ui.theme.LocalMusicTheme
+import com.localmusic.player.ui.theme.DynamicBackground
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import java.net.URLDecoder
@@ -82,6 +86,12 @@ class MainActivity : ComponentActivity() {
                 .collectAsStateWithLifecycle(true)
             val seedColor by settingsStore.seedColor
                 .collectAsStateWithLifecycle(null)
+            val backgroundMode by settingsStore.backgroundMode.collectAsStateWithLifecycle(com.localmusic.player.data.BackgroundMode.ARTWORK)
+            val backgroundImage by settingsStore.backgroundImage.collectAsStateWithLifecycle(null)
+            val backgroundColor by settingsStore.backgroundColor.collectAsStateWithLifecycle(0xFF15121C.toInt())
+            val backgroundSecondaryColor by settingsStore.backgroundSecondaryColor.collectAsStateWithLifecycle(0xFF332044.toInt())
+            val backgroundBlur by settingsStore.backgroundBlur.collectAsStateWithLifecycle(42)
+            val backgroundDim by settingsStore.backgroundDim.collectAsStateWithLifecycle(72)
 
             LocalMusicTheme(
                 themeMode = themeMode,
@@ -92,7 +102,14 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
                 ) {
-                    AppRoot()
+                    AppRoot(
+                        backgroundMode = backgroundMode,
+                        backgroundImage = backgroundImage,
+                        backgroundColor = backgroundColor,
+                        backgroundSecondaryColor = backgroundSecondaryColor,
+                        backgroundBlur = backgroundBlur,
+                        backgroundDim = backgroundDim,
+                    )
                 }
             }
         }
@@ -110,7 +127,14 @@ private fun dec(s: String?): String =
     if (s.isNullOrBlank()) "" else runCatching { URLDecoder.decode(s, "UTF-8") }.getOrDefault(s)
 
 @Composable
-private fun AppRoot() {
+private fun AppRoot(
+    backgroundMode: com.localmusic.player.data.BackgroundMode,
+    backgroundImage: String?,
+    backgroundColor: Int,
+    backgroundSecondaryColor: Int,
+    backgroundBlur: Int,
+    backgroundDim: Int,
+) {
     val tabs = listOf("音乐库", "播放列表", "收藏")
     var selectedTab by remember { mutableIntStateOf(0) }
     var nowPlayingOpen by remember { mutableStateOf(false) }
@@ -118,9 +142,22 @@ private fun AppRoot() {
 
     val navController = rememberNavController()
 
-    Scaffold(
+    Box(modifier = Modifier.fillMaxSize()) {
+        DynamicBackground(
+            mode = backgroundMode,
+            image = backgroundImage,
+            primary = Color(backgroundColor),
+            secondary = Color(backgroundSecondaryColor),
+            blur = backgroundBlur,
+            dim = backgroundDim,
+        )
+        Scaffold(
+            containerColor = Color.Transparent,
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
+                tonalElevation = 0.dp,
+            ) {
                 tabs.forEachIndexed { index, label ->
                     NavigationBarItem(
                         selected = selectedTab == index,
@@ -144,13 +181,16 @@ private fun AppRoot() {
                                 contentDescription = label,
                             )
                         },
-                        label = { Text(label) },
+                         label = { Text(label) },
                     )
                 }
             }
         },
     ) { padding ->
-        Surface(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Surface(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            color = Color.Transparent,
+        ) {
             PermissionGate(onGranted = {}) {
                 if (nowPlayingOpen) {
                     BackHandler { nowPlayingOpen = false }
@@ -315,5 +355,6 @@ private fun AppRoot() {
                 }
             }
         }
-    }
+        }
+        }
 }

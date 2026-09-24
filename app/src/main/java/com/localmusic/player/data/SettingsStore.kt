@@ -18,6 +18,8 @@ import javax.inject.Singleton
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK, BLACK }
 
+enum class BackgroundMode { ARTWORK, LOCAL_IMAGE, GRADIENT, SOLID }
+
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 @Singleton
@@ -41,6 +43,12 @@ class SettingsStore @Inject constructor(
     private val searchHistoryKey = stringSetPreferencesKey("search_history")
     private val gridAlbumsKey = booleanPreferencesKey("grid_albums")
     private val artworkOverridesKey = stringSetPreferencesKey("artwork_overrides")
+    private val backgroundModeKey = stringPreferencesKey("background_mode")
+    private val backgroundImageKey = stringPreferencesKey("background_image")
+    private val backgroundColorKey = intPreferencesKey("background_color")
+    private val backgroundSecondaryColorKey = intPreferencesKey("background_secondary_color")
+    private val backgroundBlurKey = intPreferencesKey("background_blur")
+    private val backgroundDimKey = intPreferencesKey("background_dim")
 
     val scannedFolders: Flow<Set<String>> =
         context.dataStore.data.map { it[scannedFoldersKey] ?: emptySet() }
@@ -90,6 +98,16 @@ class SettingsStore @Inject constructor(
     val gridAlbums: Flow<Boolean> =
         context.dataStore.data.map { it[gridAlbumsKey] ?: true }
 
+    val backgroundMode: Flow<BackgroundMode> = context.dataStore.data.map {
+        runCatching { BackgroundMode.valueOf(it[backgroundModeKey] ?: BackgroundMode.ARTWORK.name) }
+            .getOrDefault(BackgroundMode.ARTWORK)
+    }
+    val backgroundImage: Flow<String?> = context.dataStore.data.map { it[backgroundImageKey] }
+    val backgroundColor: Flow<Int> = context.dataStore.data.map { it[backgroundColorKey] ?: 0xFF15121C.toInt() }
+    val backgroundSecondaryColor: Flow<Int> = context.dataStore.data.map { it[backgroundSecondaryColorKey] ?: 0xFF332044.toInt() }
+    val backgroundBlur: Flow<Int> = context.dataStore.data.map { it[backgroundBlurKey] ?: 42 }
+    val backgroundDim: Flow<Int> = context.dataStore.data.map { it[backgroundDimKey] ?: 72 }
+
     suspend fun addScannedFolder(path: String) = context.dataStore.edit {
         it[scannedFoldersKey] = (it[scannedFoldersKey] ?: emptySet()) + path
     }
@@ -135,6 +153,15 @@ class SettingsStore @Inject constructor(
     suspend fun setSleepTimerFade(enabled: Boolean) = context.dataStore.edit { it[sleepTimerFadeKey] = enabled }
 
     suspend fun setGridAlbums(grid: Boolean) = context.dataStore.edit { it[gridAlbumsKey] = grid }
+
+    suspend fun setBackgroundMode(mode: BackgroundMode) = context.dataStore.edit { it[backgroundModeKey] = mode.name }
+    suspend fun setBackgroundImage(path: String?) = context.dataStore.edit {
+        if (path.isNullOrBlank()) it.remove(backgroundImageKey) else it[backgroundImageKey] = path
+    }
+    suspend fun setBackgroundColor(color: Int) = context.dataStore.edit { it[backgroundColorKey] = color }
+    suspend fun setBackgroundSecondaryColor(color: Int) = context.dataStore.edit { it[backgroundSecondaryColorKey] = color }
+    suspend fun setBackgroundBlur(value: Int) = context.dataStore.edit { it[backgroundBlurKey] = value.coerceIn(0, 80) }
+    suspend fun setBackgroundDim(value: Int) = context.dataStore.edit { it[backgroundDimKey] = value.coerceIn(0, 95) }
 
     suspend fun addSearchTerm(term: String) = context.dataStore.edit { prefs ->
         val current = prefs[searchHistoryKey] ?: emptySet()

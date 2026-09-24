@@ -4,6 +4,8 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.heightIn
@@ -28,6 +30,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,6 +43,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -64,6 +68,7 @@ import com.localmusic.player.ui.library.SortBar
 import com.localmusic.player.ui.library.SongsTab
 import com.localmusic.player.util.rememberSelectionState
 import com.localmusic.player.util.toDurationString
+import com.localmusic.player.ui.theme.DynamicBackground
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
@@ -182,7 +187,12 @@ fun LibraryScreen(
                 )
             } else {
                 TopAppBar(
-                    title = { Text("本地音乐 · ${songs.size}") },
+                    title = {
+                        Column {
+                            Text("你的音乐", style = MaterialTheme.typography.headlineSmall)
+                            Text("${songs.size} 首本地歌曲", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    },
                     actions = {
                         IconButton(onClick = onOpenSearch) {
                             Icon(Icons.Default.Search, contentDescription = "搜索")
@@ -203,14 +213,15 @@ fun LibraryScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            PrimaryTabRow(selectedTabIndex = pagerState.currentPage) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 tabs.forEachIndexed { index, tab ->
-                    Tab(
+                    androidx.compose.material3.FilterChip(
                         selected = pagerState.currentPage == index,
-                        onClick = {
-                            scope.launch { pagerState.animateScrollToPage(index) }
-                        },
-                        text = { Text(tab.label) },
+                        onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
+                        label = { Text(tab.label) },
                     )
                 }
             }
@@ -500,4 +511,3 @@ fun PlaylistInlineTab(
         )
     }
 }
-

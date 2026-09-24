@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
@@ -37,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.localmusic.player.data.ThemeMode
+import com.localmusic.player.data.BackgroundMode
 
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
@@ -48,6 +51,13 @@ fun ThemeSettingsScreen(
     val dynamicColor by viewModel.dynamicColor.collectAsStateWithLifecycle()
     val seedColor by viewModel.seedColor.collectAsStateWithLifecycle()
     val gridAlbums by viewModel.gridAlbums.collectAsStateWithLifecycle()
+    val backgroundMode by viewModel.backgroundMode.collectAsStateWithLifecycle()
+    val backgroundImage by viewModel.backgroundImage.collectAsStateWithLifecycle()
+    val backgroundBlur by viewModel.backgroundBlur.collectAsStateWithLifecycle()
+    val backgroundDim by viewModel.backgroundDim.collectAsStateWithLifecycle()
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let { viewModel.setBackgroundImage(it.toString()) }
+    }
 
     Scaffold(
         topBar = {
@@ -81,6 +91,50 @@ fun ThemeSettingsScreen(
                     )
                 }
             }
+
+            HorizontalDivider()
+
+            Text("播放背景", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "播放页和全局界面的沉浸式背景",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                BackgroundMode.entries.forEach { mode ->
+                    AssistChip(
+                        onClick = { viewModel.setBackgroundMode(mode) },
+                        label = { Text(backgroundLabel(mode)) },
+                        leadingIcon = if (backgroundMode == mode) {
+                            { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                        } else null,
+                    )
+                }
+            }
+            if (backgroundMode == BackgroundMode.LOCAL_IMAGE) {
+                AssistChip(
+                    onClick = { imagePicker.launch(arrayOf("image/*")) },
+                    label = { Text(if (backgroundImage == null) "选择本地图片" else "更换背景图片") },
+                )
+            }
+            if (backgroundMode == BackgroundMode.GRADIENT) {
+                Text("渐变色", style = MaterialTheme.typography.labelLarge)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SeedColorPicker(
+                        colors = BACKGROUND_COLORS,
+                        selected = null,
+                        onSelect = { viewModel.setBackgroundColor(it); viewModel.setBackgroundSecondaryColor(it xor 0x00303030) },
+                    )
+                }
+            }
+            Text("背景模糊：$backgroundBlur", style = MaterialTheme.typography.labelLarge)
+            androidx.compose.material3.Slider(
+                value = backgroundBlur.toFloat(), onValueChange = { viewModel.setBackgroundBlur(it.toInt()) }, valueRange = 0f..80f,
+            )
+            Text("背景暗度：$backgroundDim%", style = MaterialTheme.typography.labelLarge)
+            androidx.compose.material3.Slider(
+                value = backgroundDim.toFloat(), onValueChange = { viewModel.setBackgroundDim(it.toInt()) }, valueRange = 0f..95f,
+            )
 
             HorizontalDivider()
 
@@ -195,3 +249,15 @@ private fun modeLabel(mode: ThemeMode): String = when (mode) {
     ThemeMode.DARK -> "深色"
     ThemeMode.BLACK -> "纯黑"
 }
+
+private fun backgroundLabel(mode: BackgroundMode): String = when (mode) {
+    BackgroundMode.ARTWORK -> "封面动态"
+    BackgroundMode.LOCAL_IMAGE -> "本地图片"
+    BackgroundMode.GRADIENT -> "渐变"
+    BackgroundMode.SOLID -> "纯色"
+}
+
+private val BACKGROUND_COLORS = listOf(
+    0xFF15121C.toInt(), 0xFF102027.toInt(), 0xFF17231B.toInt(),
+    0xFF24131A.toInt(), 0xFF1A1530.toInt(), 0xFF202020.toInt(),
+)

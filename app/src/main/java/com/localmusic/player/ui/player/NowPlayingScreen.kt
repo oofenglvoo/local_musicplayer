@@ -73,6 +73,7 @@ import com.localmusic.player.lyrics.SyncedLyrics
 import com.localmusic.player.playback.PlayerConnection
 import com.localmusic.player.playback.RepeatMode
 import com.localmusic.player.ui.Artwork
+import com.localmusic.player.ui.theme.DynamicBackground
 import com.localmusic.player.util.toDurationString
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -135,21 +136,14 @@ fun NowPlayingScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        if (artworkModel != null) {
-            AsyncImage(
-                model = artworkModel,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .blur(48.dp),
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.86f)),
-            )
-        }
+        DynamicBackground(
+            mode = com.localmusic.player.data.BackgroundMode.ARTWORK,
+            fallbackArtwork = artworkModel,
+            primary = MaterialTheme.colorScheme.background,
+            secondary = MaterialTheme.colorScheme.surfaceVariant,
+            blur = 48,
+            dim = 62,
+        )
 
         Column(
             modifier = Modifier.fillMaxSize().padding(24.dp),
@@ -232,7 +226,8 @@ fun NowPlayingScreen(
 
             Text(
                 text = nowPlaying.title.ifBlank { "未在播放" },
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -284,7 +279,7 @@ fun NowPlayingScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(onClick = { PlayerConnection.toggleShuffle() }) {
-                    Icon(
+                     Icon(
                         Icons.Default.Shuffle,
                         contentDescription = "随机播放",
                         tint = if (shuffle) MaterialTheme.colorScheme.primary
@@ -305,7 +300,7 @@ fun NowPlayingScreen(
                     Icon(
                         if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                         contentDescription = "播放/暂停",
-                        modifier = Modifier.size(64.dp),
+                         modifier = Modifier.size(64.dp),
                     )
                 }
                 IconButton(onClick = { PlayerConnection.next() }) {
@@ -428,7 +423,9 @@ fun MiniPlayer(onExpand: () -> Unit, onOpenQueue: () -> Unit = {}) {
     if (nowPlaying.isEmpty) return
 
     Surface(
-        tonalElevation = 3.dp,
+        shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp),
+        tonalElevation = 8.dp,
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onExpand),

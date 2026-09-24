@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.localmusic.player.data.SettingsStore
 import com.localmusic.player.data.ThemeMode
+import com.localmusic.player.data.BackgroundMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -27,6 +28,13 @@ class SettingsViewModel @Inject constructor(
 
     val gridAlbums: StateFlow<Boolean> = settingsStore.gridAlbums
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    val backgroundMode = settingsStore.backgroundMode.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BackgroundMode.ARTWORK)
+    val backgroundImage = settingsStore.backgroundImage.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    val backgroundColor = settingsStore.backgroundColor.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0xFF15121C.toInt())
+    val backgroundSecondaryColor = settingsStore.backgroundSecondaryColor.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0xFF332044.toInt())
+    val backgroundBlur = settingsStore.backgroundBlur.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 42)
+    val backgroundDim = settingsStore.backgroundDim.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 72)
 
     val minDurationSec: StateFlow<Int> = settingsStore.minDurationSec
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
@@ -52,6 +60,13 @@ class SettingsViewModel @Inject constructor(
     fun setGridAlbums(grid: Boolean) {
         viewModelScope.launch { settingsStore.setGridAlbums(grid) }
     }
+
+    fun setBackgroundMode(mode: BackgroundMode) { viewModelScope.launch { settingsStore.setBackgroundMode(mode) } }
+    fun setBackgroundImage(path: String?) { viewModelScope.launch { settingsStore.setBackgroundImage(path) } }
+    fun setBackgroundColor(color: Int) { viewModelScope.launch { settingsStore.setBackgroundColor(color) } }
+    fun setBackgroundSecondaryColor(color: Int) { viewModelScope.launch { settingsStore.setBackgroundSecondaryColor(color) } }
+    fun setBackgroundBlur(value: Int) { viewModelScope.launch { settingsStore.setBackgroundBlur(value) } }
+    fun setBackgroundDim(value: Int) { viewModelScope.launch { settingsStore.setBackgroundDim(value) } }
 
     fun setMinDurationSec(sec: Int) {
         viewModelScope.launch { settingsStore.setMinDurationSec(sec) }
