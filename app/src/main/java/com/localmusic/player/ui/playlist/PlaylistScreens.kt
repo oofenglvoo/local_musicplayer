@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -226,10 +227,13 @@ fun PlaylistDetailScreen(
     viewModel: PlaylistDetailViewModel = hiltViewModel(),
 ) {
     val songs by viewModel.songs.collectAsStateWithLifecycle()
+    val allSongs by viewModel.allSongs.collectAsStateWithLifecycle()
     val favoriteIds by viewModel.favoriteIds.collectAsStateWithLifecycle()
     val playlistName by viewModel.playlistName.collectAsStateWithLifecycle()
     var reorderMode by remember { mutableStateOf(false) }
     var removeTarget by remember { mutableStateOf<SongEntity?>(null) }
+    var showAddSongs by remember { mutableStateOf(false) }
+    var selectedIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
 
     Scaffold(
         topBar = {
@@ -246,6 +250,9 @@ fun PlaylistDetailScreen(
                     }
                     IconButton(onClick = { viewModel.shufflePlay() }) {
                         Icon(Icons.Default.Shuffle, contentDescription = "随机播放")
+                    }
+                    IconButton(onClick = { selectedIds = emptySet(); showAddSongs = true }) {
+                        Icon(Icons.Default.Add, contentDescription = "添加歌曲")
                     }
                     IconButton(onClick = { reorderMode = !reorderMode }) {
                         Icon(
@@ -305,6 +312,40 @@ fun PlaylistDetailScreen(
             },
         )
     }
+
+    if (showAddSongs) {
+        AlertDialog(
+            onDismissRequest = { showAddSongs = false },
+            title = { Text("添加歌曲") },
+            text = {
+                LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
+                    items(allSongs, key = { it.id }) { song ->
+                        val checked = song.id in selectedIds
+                        ListItem(
+                            modifier = Modifier.clickable {
+                                selectedIds = if (checked) selectedIds - song.id else selectedIds + song.id
+                            },
+                            headlineContent = { Text(song.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                            supportingContent = { Text(song.artist, maxLines = 1) },
+                            leadingContent = {
+                                androidx.compose.material3.Checkbox(
+                                    checked = checked,
+                                    onCheckedChange = null,
+                                )
+                            },
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.addSongs(selectedIds.toList())
+                    showAddSongs = false
+                }) { Text("添加（${selectedIds.size}）") }
+            },
+            dismissButton = { TextButton(onClick = { showAddSongs = false }) { Text("取消") } },
+        )
+    }
 }
 
 @Composable
@@ -360,6 +401,7 @@ private fun ReorderableSongList(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoritesScreen(
+    onBack: () -> Unit = {},
     viewModel: FavoritesViewModel = hiltViewModel(),
 ) {
     val songs by viewModel.songs.collectAsStateWithLifecycle()
@@ -368,7 +410,12 @@ fun FavoritesScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("收藏 · ${songs.size}") },
+                title = { Text("我的喜欢 · ${songs.size}") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                    }
+                },
                 actions = {
                     if (songs.isNotEmpty()) {
                         IconButton(onClick = { PlayerConnection.playSongsShuffled(songs) }) {

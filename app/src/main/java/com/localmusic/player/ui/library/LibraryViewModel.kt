@@ -147,4 +147,6 @@ class LibraryViewModel @Inject constructor(
     fun toggleFavorite(songId: Long) {
         viewModelScope.launch { repository.toggleFavorite(songId) }
     }
+
+    fun songsInPlaylist(id: Long): Flow<List<SongEntity>> = repository.songsInPlaylist(id)
 }

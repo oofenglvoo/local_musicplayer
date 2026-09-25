@@ -29,6 +29,8 @@ data class QueueItem(
     val songId: Long,
     val title: String,
     val artist: String,
+    val albumId: Long = 0L,
+    val artworkPath: String? = null,
     val isCurrent: Boolean,
 )
 
@@ -144,6 +146,8 @@ object PlayerConnection {
                         songId = mi.mediaId.toLongOrNull() ?: -1L,
                         title = mi.mediaMetadata.title?.toString().orEmpty(),
                         artist = mi.mediaMetadata.artist?.toString().orEmpty(),
+                        albumId = mi.mediaMetadata.extras?.getLong("albumId") ?: 0L,
+                        artworkPath = mi.mediaMetadata.extras?.getString("artworkPath"),
                         isCurrent = i == c.currentMediaItemIndex,
                     )
                 )
@@ -164,12 +168,11 @@ object PlayerConnection {
     fun playSongsShuffled(songs: List<SongEntity>) {
         val c = controller ?: return
         if (songs.isEmpty()) return
-        val shuffled = songs.shuffled()
-        val items = shuffled.map { it.toMediaItem() }
+        val items = songs.map { it.toMediaItem() }
         c.setMediaItems(items, 0, 0L)
+        c.shuffleModeEnabled = true
         c.prepare()
         c.play()
-        setShuffle(true)
     }
 
     fun playNext(songs: List<SongEntity>) {

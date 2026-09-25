@@ -29,6 +29,9 @@ class PlaylistDetailViewModel @Inject constructor(
     val songs: StateFlow<List<SongEntity>> = repository.songsInPlaylist(playlistId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val allSongs: StateFlow<List<SongEntity>> = repository.songs
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val favoriteIds: StateFlow<Set<Long>> = repository.favoriteIds
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
@@ -50,6 +53,11 @@ class PlaylistDetailViewModel @Inject constructor(
 
     fun removeFromPlaylist(songId: Long) {
         viewModelScope.launch { repository.removeFromPlaylist(playlistId, songId) }
+    }
+
+    fun addSongs(songIds: List<Long>) {
+        if (songIds.isEmpty()) return
+        viewModelScope.launch { repository.addSongsToPlaylist(playlistId, songIds) }
     }
 
     fun move(from: Int, to: Int) {
