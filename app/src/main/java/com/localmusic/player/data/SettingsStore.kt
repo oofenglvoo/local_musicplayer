@@ -103,8 +103,8 @@ class SettingsStore @Inject constructor(
             .getOrDefault(BackgroundMode.ARTWORK)
     }
     val backgroundImage: Flow<String?> = context.dataStore.data.map { it[backgroundImageKey] }
-    val backgroundColor: Flow<Int> = context.dataStore.data.map { it[backgroundColorKey] ?: 0xFF15121C.toInt() }
-    val backgroundSecondaryColor: Flow<Int> = context.dataStore.data.map { it[backgroundSecondaryColorKey] ?: 0xFF332044.toInt() }
+    val backgroundColor: Flow<Int?> = context.dataStore.data.map { it[backgroundColorKey] }
+    val backgroundSecondaryColor: Flow<Int?> = context.dataStore.data.map { it[backgroundSecondaryColorKey] }
     val backgroundBlur: Flow<Int> = context.dataStore.data.map { it[backgroundBlurKey] ?: 42 }
     val backgroundDim: Flow<Int> = context.dataStore.data.map { it[backgroundDimKey] ?: 72 }
 

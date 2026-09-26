@@ -142,8 +142,8 @@ fun NowPlayingScreen(
             mode = backgroundMode,
             image = backgroundImage,
             fallbackArtwork = artworkModel,
-            primary = Color(backgroundColor),
-            secondary = Color(backgroundSecondaryColor),
+            primary = backgroundColor?.let { Color(it) } ?: Color.Unspecified,
+            secondary = backgroundSecondaryColor?.let { Color(it) } ?: Color.Unspecified,
             blur = backgroundBlur,
             dim = backgroundDim,
         )

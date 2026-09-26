@@ -31,8 +31,8 @@ class SettingsViewModel @Inject constructor(
 
     val backgroundMode = settingsStore.backgroundMode.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BackgroundMode.ARTWORK)
     val backgroundImage = settingsStore.backgroundImage.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
-    val backgroundColor = settingsStore.backgroundColor.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0xFF15121C.toInt())
-    val backgroundSecondaryColor = settingsStore.backgroundSecondaryColor.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0xFF332044.toInt())
+    val backgroundColor = settingsStore.backgroundColor.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    val backgroundSecondaryColor = settingsStore.backgroundSecondaryColor.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
     val backgroundBlur = settingsStore.backgroundBlur.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 42)
     val backgroundDim = settingsStore.backgroundDim.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 72)
 
