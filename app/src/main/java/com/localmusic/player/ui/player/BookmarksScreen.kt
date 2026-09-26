@@ -36,8 +36,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.localmusic.player.R
 import com.localmusic.player.util.toDurationString
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,10 +65,10 @@ fun BookmarksScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("书签") },
+                title = { Text(stringResource(R.string.bookmarks_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
             )
@@ -74,7 +76,7 @@ fun BookmarksScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(onClick = { showAdd = true }) {
-                Icon(Icons.Default.Add, contentDescription = "添加书签")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.bookmarks_add))
             }
         },
     ) { padding ->
@@ -83,7 +85,7 @@ fun BookmarksScreen(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentAlignment = Alignment.Center,
             ) {
-                Text("还没有书签，点击右下角添加到当前播放位置", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.bookmarks_empty), style = MaterialTheme.typography.bodyMedium)
             }
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
@@ -94,7 +96,7 @@ fun BookmarksScreen(
                         supportingContent = { Text(bookmark.positionMs.toDurationString()) },
                         trailingContent = {
                             IconButton(onClick = { viewModel.delete(bookmark.id) }) {
-                                Icon(Icons.Default.Delete, contentDescription = "删除")
+                                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.common_delete))
                             }
                         },
                     )
@@ -107,12 +109,12 @@ fun BookmarksScreen(
         var label by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showAdd = false },
-            title = { Text("添加书签") },
+            title = { Text(stringResource(R.string.bookmarks_add)) },
             text = {
                 OutlinedTextField(
                     value = label,
                     onValueChange = { label = it },
-                    placeholder = { Text("书签名称") },
+                    placeholder = { Text(stringResource(R.string.bookmarks_label_hint)) },
                     singleLine = true,
                 )
             },
@@ -120,10 +122,10 @@ fun BookmarksScreen(
                 TextButton(onClick = {
                     viewModel.addBookmarkAtCurrent(label)
                     showAdd = false
-                }) { Text("添加") }
+                }) { Text(stringResource(R.string.common_add)) }
             },
             dismissButton = {
-                TextButton(onClick = { showAdd = false }) { Text("取消") }
+                TextButton(onClick = { showAdd = false }) { Text(stringResource(R.string.common_cancel)) }
             },
         )
     }

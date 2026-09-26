@@ -45,6 +45,28 @@ class MusicRepository @Inject constructor(
     val favoriteIds: Flow<Set<Long>> = favoriteDao.observeFavorites()
         .map { list -> list.map { it.songId }.toSet() }
 
+    suspend fun search(query: String): List<SongEntity> {
+        val trimmed = query.trim()
+        if (trimmed.isEmpty()) return emptyList()
+        val match = buildFtsQuery(trimmed)
+        val result = if (match != null) runCatching { songDao.search(match) }.getOrDefault(emptyList())
+        else emptyList()
+        if (result.isNotEmpty()) return result
+        val like = "%" + trimmed.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+        return songDao.searchByTitle(like, 100, 0)
+    }
+
+    private fun buildFtsQuery(raw: String): String? {
+        val tokens = raw.split(Regex("[^\\p{L}\\p{N}_]+"))
+            .filter { it.isNotBlank() }
+            .map { "\"" + it.replace("\"", "\"\"") + "\"*" }
+        return if (tokens.isEmpty()) null else tokens.joinToString(" ")
+    }
+
+    fun folders(): Flow<List<String>> = songDao.observeFolders()
+
+    fun songsInFolder(path: String): Flow<List<SongEntity>> = songDao.observeByFolder(path)
+
     fun songsInPlaylist(playlistId: Long): Flow<List<SongEntity>> =
         playlistDao.observePlaylistSongs(playlistId).map { refs ->
             if (refs.isEmpty()) emptyList()
@@ -100,7 +122,7 @@ class MusicRepository @Inject constructor(
         val minDuration = settingsStore.minDurationSec.first()
         val fromMediaStore = MediaStoreScanner.scan(context, excluded, minDuration)
         val fromFolders = scanAllFolders(excluded, minDuration)
-        val merged = mergeSongs(fromMediaStore, fromFolders)
+        val merged = mergeSongs(fromMediaStore, fromFolders).distinctBy { it.path }
         val overrides = settingsStore.artworkOverrides.first()
         val stats = songDao.playStats().associateBy { it.path }
         val withArtwork = merged.map { song ->

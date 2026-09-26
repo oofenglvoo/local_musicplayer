@@ -35,9 +35,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.localmusic.player.R
 import com.localmusic.player.data.ThemeMode
 import com.localmusic.player.data.BackgroundMode
 
@@ -62,10 +64,10 @@ fun ThemeSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("外观") },
+                title = { Text(stringResource(R.string.settings_theme)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
             )
@@ -79,12 +81,12 @@ fun ThemeSettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("主题模式", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.settings_theme_mode), style = MaterialTheme.typography.titleMedium)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ThemeMode.entries.forEach { mode ->
                     AssistChip(
                         onClick = { viewModel.setThemeMode(mode) },
-                        label = { Text(modeLabel(mode)) },
+                        label = { Text(stringResource(modeLabelRes(mode))) },
                         leadingIcon = if (themeMode == mode) {
                             { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
                         } else null,
@@ -94,9 +96,9 @@ fun ThemeSettingsScreen(
 
             HorizontalDivider()
 
-            Text("播放背景", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.settings_background), style = MaterialTheme.typography.titleMedium)
             Text(
-                "播放页和全局界面的沉浸式背景",
+                stringResource(R.string.settings_background_desc),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -104,7 +106,7 @@ fun ThemeSettingsScreen(
                 BackgroundMode.entries.forEach { mode ->
                     AssistChip(
                         onClick = { viewModel.setBackgroundMode(mode) },
-                        label = { Text(backgroundLabel(mode)) },
+                        label = { Text(stringResource(backgroundLabelRes(mode))) },
                         leadingIcon = if (backgroundMode == mode) {
                             { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
                         } else null,
@@ -114,11 +116,11 @@ fun ThemeSettingsScreen(
             if (backgroundMode == BackgroundMode.LOCAL_IMAGE) {
                 AssistChip(
                     onClick = { imagePicker.launch(arrayOf("image/*")) },
-                    label = { Text(if (backgroundImage == null) "选择本地图片" else "更换背景图片") },
+                    label = { Text(stringResource(if (backgroundImage == null) R.string.settings_background_pick else R.string.settings_background_change)) },
                 )
             }
             if (backgroundMode == BackgroundMode.GRADIENT) {
-                Text("渐变色", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(R.string.settings_gradient), style = MaterialTheme.typography.labelLarge)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     SeedColorPicker(
                         colors = BACKGROUND_COLORS,
@@ -127,11 +129,11 @@ fun ThemeSettingsScreen(
                     )
                 }
             }
-            Text("背景模糊：$backgroundBlur", style = MaterialTheme.typography.labelLarge)
+            Text(stringResource(R.string.settings_blur, backgroundBlur), style = MaterialTheme.typography.labelLarge)
             androidx.compose.material3.Slider(
                 value = backgroundBlur.toFloat(), onValueChange = { viewModel.setBackgroundBlur(it.toInt()) }, valueRange = 0f..80f,
             )
-            Text("背景暗度：$backgroundDim%", style = MaterialTheme.typography.labelLarge)
+            Text(stringResource(R.string.settings_dim, backgroundDim), style = MaterialTheme.typography.labelLarge)
             androidx.compose.material3.Slider(
                 value = backgroundDim.toFloat(), onValueChange = { viewModel.setBackgroundDim(it.toInt()) }, valueRange = 0f..95f,
             )
@@ -144,9 +146,9 @@ fun ThemeSettingsScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column {
-                    Text("动态取色", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.settings_dynamic_color_full), style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "使用壁纸颜色生成主题（Android 12+）",
+                        stringResource(R.string.settings_dynamic_color_full_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -160,7 +162,7 @@ fun ThemeSettingsScreen(
                 )
             }
 
-            Text("强调色", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.settings_accent), style = MaterialTheme.typography.titleMedium)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 SeedColorPicker(
                     colors = PRESET_COLORS,
@@ -180,9 +182,9 @@ fun ThemeSettingsScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column {
-                    Text("专辑网格布局", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.settings_album_grid), style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "专辑列表以网格方式展示",
+                        stringResource(R.string.settings_album_grid_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -243,18 +245,20 @@ private val PRESET_COLORS = listOf(
     0xFF9C27B0.toInt(),
 )
 
-private fun modeLabel(mode: ThemeMode): String = when (mode) {
-    ThemeMode.SYSTEM -> "跟随系统"
-    ThemeMode.LIGHT -> "浅色"
-    ThemeMode.DARK -> "深色"
-    ThemeMode.BLACK -> "纯黑"
+@androidx.annotation.StringRes
+private fun modeLabelRes(mode: ThemeMode): Int = when (mode) {
+    ThemeMode.SYSTEM -> R.string.settings_theme_system
+    ThemeMode.LIGHT -> R.string.settings_theme_light
+    ThemeMode.DARK -> R.string.settings_theme_dark
+    ThemeMode.BLACK -> R.string.settings_black
 }
 
-private fun backgroundLabel(mode: BackgroundMode): String = when (mode) {
-    BackgroundMode.ARTWORK -> "封面动态"
-    BackgroundMode.LOCAL_IMAGE -> "本地图片"
-    BackgroundMode.GRADIENT -> "渐变"
-    BackgroundMode.SOLID -> "纯色"
+@androidx.annotation.StringRes
+private fun backgroundLabelRes(mode: BackgroundMode): Int = when (mode) {
+    BackgroundMode.ARTWORK -> R.string.background_artwork
+    BackgroundMode.LOCAL_IMAGE -> R.string.background_local_image
+    BackgroundMode.GRADIENT -> R.string.background_gradient
+    BackgroundMode.SOLID -> R.string.background_solid
 }
 
 private val BACKGROUND_COLORS = listOf(

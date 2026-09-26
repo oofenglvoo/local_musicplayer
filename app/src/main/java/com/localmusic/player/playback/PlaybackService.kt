@@ -87,6 +87,14 @@ class PlaybackService : MediaSessionService() {
 
         mediaSession = MediaSession.Builder(this, exoPlayer)
             .setCallback(SessionCallback())
+            .setSessionActivity(
+                android.app.PendingIntent.getActivity(
+                    this,
+                    0,
+                    android.content.Intent(this, com.localmusic.player.MainActivity::class.java),
+                    android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT,
+                )
+            )
             .build()
     }
 
@@ -95,6 +103,11 @@ class PlaybackService : MediaSessionService() {
             session: MediaSession,
             controller: MediaSession.ControllerInfo,
         ): MediaSession.ConnectionResult {
+            // Only export the session to the system UI / our own app; reject arbitrary callers
+            // unless they hold the privileged MEDIA_CONTENT_CONTROL permission.
+            if (!isTrustedController(controller)) {
+                return MediaSession.ConnectionResult.reject()
+            }
             val result = super.onConnect(session, controller)
             val sessionCommands = result.availableSessionCommands
                 .buildUpon()
@@ -142,7 +155,7 @@ class PlaybackService : MediaSessionService() {
         private fun shuffleButton(session: MediaSession): androidx.media3.session.CommandButton {
             val shuffleOn = session.player.shuffleModeEnabled
             return androidx.media3.session.CommandButton.Builder()
-                .setDisplayName("随机")
+                .setDisplayName(getString(com.localmusic.player.R.string.common_shuffle))
                 .setIconResId(
                     if (shuffleOn) android.R.drawable.ic_menu_sort_by_size
                     else android.R.drawable.ic_menu_sort_by_size
@@ -157,9 +170,9 @@ class PlaybackService : MediaSessionService() {
             return androidx.media3.session.CommandButton.Builder()
                 .setDisplayName(
                     when (session.player.repeatMode) {
-                        Player.REPEAT_MODE_ONE -> "单曲循环"
-                        Player.REPEAT_MODE_ALL -> "列表循环"
-                        else -> "顺序播放"
+                        Player.REPEAT_MODE_ONE -> getString(com.localmusic.player.R.string.repeat_one)
+                        Player.REPEAT_MODE_ALL -> getString(com.localmusic.player.R.string.repeat_all)
+                        else -> getString(com.localmusic.player.R.string.repeat_off)
                     }
                 )
                 .setIconResId(android.R.drawable.ic_menu_rotate)
@@ -167,6 +180,17 @@ class PlaybackService : MediaSessionService() {
                 .setEnabled(true)
                 .build()
         }
+    }
+
+    private fun isTrustedController(controller: MediaSession.ControllerInfo): Boolean {
+        if (controller.uid == android.os.Process.myUid()) return true
+        if (controller.uid == 1000) return true
+        val pkg = controller.packageName
+        if (pkg == "android" || pkg == "com.android.systemui") return true
+        return runCatching {
+            checkCallingOrSelfPermission(android.Manifest.permission.MEDIA_CONTENT_CONTROL) ==
+                android.content.pm.PackageManager.PERMISSION_GRANTED
+        }.getOrDefault(false)
     }
 
     private var crossfadeJob: Job? = null
@@ -210,6 +234,8 @@ class PlaybackService : MediaSessionService() {
         mediaSession = null
         player = null
         PlayerConnection.effects.release()
+        PlayerConnection.crossfade.release()
+        ReplayGainManager.release()
         super.onDestroy()
     }
 

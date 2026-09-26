@@ -31,11 +31,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.localmusic.player.R
 import com.localmusic.player.data.AlbumGroup
 import com.localmusic.player.data.ArtistGroup
 import com.localmusic.player.data.FolderGroup
@@ -79,12 +81,12 @@ fun SongsTab(
             AutoList.entries.forEach { list ->
                 androidx.compose.material3.AssistChip(
                     onClick = { onOpenAutoList(list) },
-                    label = { Text(list.label) },
+                    label = { Text(stringResource(list.labelRes)) },
                 )
             }
         }
         Text(
-            "快速入口",
+            stringResource(R.string.common_quick_entry),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
         )
@@ -97,19 +99,22 @@ fun SongsTab(
                     modifier = Modifier.size(width = 142.dp, height = 82.dp).clickable { onOpenAutoList(list) },
                 ) {
                     Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.SpaceBetween) {
-                        Text(list.label, style = MaterialTheme.typography.titleSmall)
-                        Text("浏览并播放", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(list.labelRes), style = MaterialTheme.typography.titleSmall)
+                        Text(stringResource(R.string.common_browse_play), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
         }
         Text(
-            "全部歌曲",
+            stringResource(R.string.common_all_songs),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
         )
         if (displayed.isEmpty()) {
-            EmptyHint(if (songs.isEmpty()) "未发现本地音乐，点击右上角扫描目录" else "没有匹配的歌曲")
+            EmptyHint(
+                if (songs.isEmpty()) stringResource(R.string.common_no_local_music)
+                else stringResource(R.string.common_no_match_song)
+            )
         } else {
             LazyColumn(
                 modifier = Modifier
@@ -143,10 +148,10 @@ fun SongsTab(
     }
 }
 
-enum class AutoList(val label: String) {
-    RECENTLY_ADDED("最近添加"),
-    RECENTLY_PLAYED("最近播放"),
-    MOST_PLAYED("最常播放"),
+enum class AutoList(@androidx.annotation.StringRes val labelRes: Int) {
+    RECENTLY_ADDED(com.localmusic.player.R.string.autolist_recently_added),
+    RECENTLY_PLAYED(com.localmusic.player.R.string.autolist_recently_played),
+    MOST_PLAYED(com.localmusic.player.R.string.autolist_most_played),
 }
 
 @Composable
@@ -156,7 +161,7 @@ fun AlbumsTab(
     grid: Boolean = true,
 ) {
     if (albums.isEmpty()) {
-        EmptyHint("暂无专辑")
+        EmptyHint(stringResource(R.string.common_no_albums))
         return
     }
     if (grid) {
@@ -216,7 +221,7 @@ private fun AlbumListRow(album: AlbumGroup, onClick: () -> Unit) {
         modifier = Modifier.clickable(onClick = onClick),
         headlineContent = { Text(album.album, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         supportingContent = {
-            Text("${album.artist} · ${album.songs.size} 首", maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(stringResource(R.string.search_album_subtitle, album.artist, album.songs.size), maxLines = 1, overflow = TextOverflow.Ellipsis)
         },
         leadingContent = {
             Artwork(
@@ -233,7 +238,7 @@ fun ArtistsTab(
     onOpenArtist: (ArtistGroup) -> Unit,
 ) {
     if (artists.isEmpty()) {
-        EmptyHint("暂无艺术家")
+        EmptyHint(stringResource(R.string.common_no_artists))
         return
     }
     LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -241,7 +246,7 @@ fun ArtistsTab(
             ListItem(
                 modifier = Modifier.clickable { onOpenArtist(artist) },
                 headlineContent = { Text(artist.artist, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                supportingContent = { Text("${artist.songs.size} 首 · ${artist.albumCount} 张专辑") },
+                supportingContent = { Text(stringResource(R.string.search_artist_subtitle, artist.songs.size, artist.albumCount)) },
                 leadingContent = {
                     Artwork(
                         source = AlbumArtSource(
@@ -262,16 +267,20 @@ fun FoldersTab(
     onOpenFolder: (FolderGroup) -> Unit,
 ) {
     if (folders.isEmpty()) {
-        EmptyHint("暂无文件夹")
+        EmptyHint(stringResource(R.string.common_no_folders))
         return
     }
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         items(folders, key = { it.path }) { folder ->
             ListItem(
                 modifier = Modifier.clickable { onOpenFolder(folder) },
-                headlineContent = { Text(folder.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                headlineContent = { Text(folder.name ?: stringResource(R.string.library_root_folder), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 supportingContent = {
-                    Text("${folder.songs.size} 首 · ${folder.path}", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        stringResource(R.string.playlist_song_count, folder.songs.size) + " · " + folder.path,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 },
             )
         }
@@ -299,7 +308,7 @@ fun SortBar(
                     .padding(horizontal = 8.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("排序：${sort.label}", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(R.string.common_sort_prefix) + stringResource(sort.labelRes), style = MaterialTheme.typography.labelLarge)
                 Text(
                     if (ascending) " ↑" else " ↓",
                     style = MaterialTheme.typography.labelLarge,
@@ -314,7 +323,7 @@ fun SortBar(
             ) {
                 SongSort.entries.forEach { field ->
                     androidx.compose.material3.DropdownMenuItem(
-                        text = { Text(field.label) },
+                        text = { Text(stringResource(field.labelRes)) },
                         onClick = {
                             onSortChange(field)
                             expanded = false
@@ -387,11 +396,11 @@ fun PlayableHeader(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             androidx.compose.material3.FilledTonalButton(onClick = onPlayAll) {
-                Text("播放全部")
+                Text(stringResource(R.string.common_play_all))
             }
             if (onShuffle != null) {
                 androidx.compose.material3.OutlinedButton(onClick = onShuffle) {
-                    Text("随机播放")
+                    Text(stringResource(R.string.common_shuffle_all))
                 }
             }
         }

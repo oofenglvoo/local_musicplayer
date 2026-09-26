@@ -26,6 +26,7 @@ data class BrowserState(
 @HiltViewModel
 class FolderBrowserViewModel @Inject constructor(
     private val repository: MusicRepository,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val appContext: android.content.Context,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(BrowserState())
@@ -70,7 +71,11 @@ class FolderBrowserViewModel @Inject constructor(
             val count = runCatching { repository.rebuildWithFolder(dir.absolutePath) }
                 .getOrDefault(0)
             _scanning.value = false
-            _message.value = "已扫描 ${dir.name}，音乐库共 $count 首"
+            _message.value = appContext.getString(
+                com.localmusic.player.R.string.folder_scanned_message,
+                dir.name,
+                count,
+            )
         }
     }
 
@@ -83,7 +88,11 @@ class FolderBrowserViewModel @Inject constructor(
                 repository.refreshLibrary()
             }.getOrDefault(0)
             _scanning.value = false
-            _message.value = "已排除 ${dir.name}，音乐库共 $count 首"
+            _message.value = appContext.getString(
+                com.localmusic.player.R.string.folder_excluded_message,
+                dir.name,
+                count,
+            )
         }
     }
 
@@ -95,7 +104,7 @@ class FolderBrowserViewModel @Inject constructor(
                 repository.refreshLibrary()
             }
             _scanning.value = false
-            _message.value = "已移除目录并更新音乐库"
+            _message.value = appContext.getString(com.localmusic.player.R.string.folder_removed_message)
         }
     }
 
@@ -104,7 +113,7 @@ class FolderBrowserViewModel @Inject constructor(
         viewModelScope.launch {
             val count = runCatching { repository.refreshLibrary() }.getOrDefault(0)
             _scanning.value = false
-            _message.value = "重新扫描完成，共 $count 首"
+            _message.value = appContext.getString(com.localmusic.player.R.string.folder_rescan_message, count)
         }
     }
 

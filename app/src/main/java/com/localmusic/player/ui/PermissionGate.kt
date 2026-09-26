@@ -21,8 +21,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import com.localmusic.player.R
 
 fun requiredAudioPermission(): String =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -65,7 +67,7 @@ fun PermissionGate(
             verticalArrangement = Arrangement.Center,
         ) {
             Text(
-                text = "需要访问音频文件权限才能扫描本地音乐",
+                text = stringResource(R.string.permission_audio_rationale),
                 textAlign = TextAlign.Center,
             )
             Button(
@@ -78,7 +80,7 @@ fun PermissionGate(
                 },
                 modifier = Modifier.padding(top = 16.dp),
             ) {
-                Text("授予权限")
+                Text(stringResource(R.string.permission_grant))
             }
         }
     }

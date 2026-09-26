@@ -27,12 +27,14 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.localmusic.player.R
 
-private val MIN_DURATION_OPTIONS = listOf(0 to "不过滤", 10 to "10 秒", 30 to "30 秒", 60 to "60 秒")
+private val MIN_DURATION_VALUES = listOf(0, 10, 30, 60)
 
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
@@ -48,10 +50,10 @@ fun LibrarySettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("音乐库") },
+                title = { Text(stringResource(R.string.settings_library)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
             )
@@ -65,17 +67,22 @@ fun LibrarySettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("忽略短音频", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.library_ignore_short), style = MaterialTheme.typography.titleMedium)
             Text(
-                "扫描时跳过时长低于该值的音频文件",
+                stringResource(R.string.library_ignore_short_desc),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                MIN_DURATION_OPTIONS.forEach { (sec, label) ->
+                MIN_DURATION_VALUES.forEach { sec ->
                     AssistChip(
                         onClick = { viewModel.setMinDurationSec(sec) },
-                        label = { Text(label) },
+                        label = {
+                            Text(
+                                if (sec == 0) stringResource(R.string.library_min_duration_none)
+                                else stringResource(R.string.library_min_duration_sec, sec)
+                            )
+                        },
                         leadingIcon = if (minDuration == sec) {
                             { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.padding(end = 2.dp)) }
                         } else null,
@@ -85,10 +92,10 @@ fun LibrarySettingsScreen(
 
             HorizontalDivider()
 
-            Text("扫描目录", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.library_scan_folders), style = MaterialTheme.typography.titleMedium)
             if (scanned.isEmpty()) {
                 Text(
-                    "尚未手动添加扫描目录（默认扫描媒体库）",
+                    stringResource(R.string.library_no_scan_folder),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -98,7 +105,7 @@ fun LibrarySettingsScreen(
                         headlineContent = { Text(path, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                         trailingContent = {
                             IconButton(onClick = { viewModel.removeScannedFolder(path) }) {
-                                Icon(Icons.Default.Delete, contentDescription = "移除")
+                                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.common_remove))
                             }
                         },
                     )
@@ -107,24 +114,24 @@ fun LibrarySettingsScreen(
 
             HorizontalDivider()
 
-            Text("排除目录", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.library_excluded_folders), style = MaterialTheme.typography.titleMedium)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
             ) {
                 Text(
-                    "扫描时会跳过这些目录",
+                    stringResource(R.string.library_excluded_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
                 )
                 androidx.compose.material3.TextButton(onClick = onAddExcludedFolder) {
-                    Text("添加排除目录")
+                    Text(stringResource(R.string.library_add_excluded_folder))
                 }
             }
             if (excluded.isEmpty()) {
                 Text(
-                    "没有排除任何目录",
+                    stringResource(R.string.library_no_excluded),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -134,7 +141,7 @@ fun LibrarySettingsScreen(
                         headlineContent = { Text(path, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                         trailingContent = {
                             IconButton(onClick = { viewModel.removeExcludedFolder(path) }) {
-                                Icon(Icons.Default.Delete, contentDescription = "移除")
+                                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.common_remove))
                             }
                         },
                     )

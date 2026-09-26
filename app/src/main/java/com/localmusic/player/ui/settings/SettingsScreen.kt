@@ -28,8 +28,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.localmusic.player.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,10 +46,10 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("设置") },
+                title = { Text(stringResource(R.string.settings_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
             )
@@ -59,12 +61,12 @@ fun SettingsScreen(
                 .padding(padding)
                 .verticalScroll(rememberScrollState()),
         ) {
-            Text("个性化你的播放器", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(16.dp))
-            SettingsCard("外观", "主题、强调色、播放背景与布局", Icons.Default.Palette, onOpenTheme)
-            SettingsCard("音效与播放", "均衡器、速度、交叉淡入淡出、ReplayGain", Icons.Default.Equalizer, onOpenAudio)
-            SettingsCard("音乐库", "扫描目录、排除目录、忽略短音频", Icons.Default.Folder, onOpenLibrary)
+            Text(stringResource(R.string.settings_personalize), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(16.dp))
+            SettingsCard(stringResource(R.string.settings_theme), stringResource(R.string.settings_theme_subtitle), Icons.Default.Palette, onOpenTheme)
+            SettingsCard(stringResource(R.string.settings_audio), stringResource(R.string.settings_audio_subtitle), Icons.Default.Equalizer, onOpenAudio)
+            SettingsCard(stringResource(R.string.settings_library), stringResource(R.string.settings_library_subtitle), Icons.Default.Folder, onOpenLibrary)
             HorizontalDivider()
-            SettingsCard("关于", "版本信息与开源许可", Icons.Default.Info, onOpenAbout)
+            SettingsCard(stringResource(R.string.settings_about), stringResource(R.string.settings_about_subtitle), Icons.Default.Info, onOpenAbout)
         }
     }
 }

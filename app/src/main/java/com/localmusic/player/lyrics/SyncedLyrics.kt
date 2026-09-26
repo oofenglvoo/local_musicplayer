@@ -52,7 +52,7 @@ fun SyncedLyrics(
     if (lyrics.lines.isEmpty()) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(
-                lyrics.plainText ?: "暂无歌词",
+                lyrics.plainText ?: androidx.compose.ui.res.stringResource(com.localmusic.player.R.string.now_playing_no_lyrics),
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(24.dp),

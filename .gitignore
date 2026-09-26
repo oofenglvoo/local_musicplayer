@@ -14,3 +14,4 @@ local.properties
 *.aab
 *.keystore
 !debug.keystore
+keystore.properties

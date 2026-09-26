@@ -39,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -48,6 +49,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.localmusic.player.R
 import com.localmusic.player.playback.PlayerConnection
 import com.localmusic.player.ui.PermissionGate
 import com.localmusic.player.ui.folder.FolderBrowserScreen
@@ -133,11 +135,15 @@ private data class BottomTab(
 
 @Composable
 private fun AppRoot() {
+    val homeLabel = stringResource(R.string.tab_home)
+    val localLabel = stringResource(R.string.tab_local)
+    val playlistsLabel = stringResource(R.string.tab_playlists)
+    val profileLabel = stringResource(R.string.tab_profile)
     val tabs = listOf(
-        BottomTab("home", "首页", Icons.Filled.Home, Icons.Outlined.Home),
-        BottomTab("local", "本地", Icons.Filled.Folder, Icons.Outlined.Folder),
-        BottomTab("playlists", "歌单", Icons.Filled.LibraryMusic, Icons.Outlined.LibraryMusic),
-        BottomTab("profile", "我的", Icons.Filled.Person, Icons.Outlined.Person),
+        BottomTab("home", homeLabel, Icons.Filled.Home, Icons.Outlined.Home),
+        BottomTab("local", localLabel, Icons.Filled.Folder, Icons.Outlined.Folder),
+        BottomTab("playlists", playlistsLabel, Icons.Filled.LibraryMusic, Icons.Outlined.LibraryMusic),
+        BottomTab("profile", profileLabel, Icons.Filled.Person, Icons.Outlined.Person),
     )
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     var nowPlayingOpen by rememberSaveable { mutableStateOf(false) }

@@ -40,10 +40,10 @@ data class QueueItem(
     val isCurrent: Boolean,
 )
 
-enum class RepeatMode(val value: Int, val label: String) {
-    OFF(Player.REPEAT_MODE_OFF, "顺序播放"),
-    ALL(Player.REPEAT_MODE_ALL, "列表循环"),
-    ONE(Player.REPEAT_MODE_ONE, "单曲循环");
+enum class RepeatMode(val value: Int, @androidx.annotation.StringRes val labelRes: Int) {
+    OFF(Player.REPEAT_MODE_OFF, com.localmusic.player.R.string.repeat_off),
+    ALL(Player.REPEAT_MODE_ALL, com.localmusic.player.R.string.repeat_all),
+    ONE(Player.REPEAT_MODE_ONE, com.localmusic.player.R.string.repeat_one);
 
     companion object {
         fun from(value: Int): RepeatMode = entries.firstOrNull { it.value == value } ?: OFF

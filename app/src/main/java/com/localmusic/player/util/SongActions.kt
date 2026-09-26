@@ -11,6 +11,7 @@ import android.provider.MediaStore
 import android.provider.Settings
 import android.widget.Toast
 import androidx.core.content.FileProvider
+import com.localmusic.player.R
 import com.localmusic.player.data.db.SongEntity
 import java.io.File
 
@@ -29,7 +30,7 @@ object SongActions {
     fun shareSong(context: Context, song: SongEntity) {
         val file = File(song.path)
         if (!file.exists()) {
-            toast(context, "文件不存在")
+            toast(context, context.getString(R.string.song_action_file_missing))
             return
         }
         val uri: Uri = runCatching {
@@ -49,18 +50,18 @@ object SongActions {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         runCatching {
-            context.startActivity(Intent.createChooser(intent, "分享歌曲"))
-        }.onFailure { toast(context, "没有可用的分享应用") }
+            context.startActivity(Intent.createChooser(intent, context.getString(R.string.song_action_share_title)))
+        }.onFailure { toast(context, context.getString(R.string.song_action_no_share_app)) }
     }
 
     fun setAsRingtone(context: Context, song: SongEntity): Boolean {
         val file = File(song.path)
         if (!file.exists()) {
-            toast(context, "文件不存在")
+            toast(context, context.getString(R.string.song_action_file_missing))
             return false
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.System.canWrite(context)) {
-            toast(context, "需要授予“修改系统设置”权限")
+            toast(context, context.getString(R.string.song_action_need_write_settings))
             val intent = Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS).apply {
                 data = Uri.parse("package:${context.packageName}")
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -87,10 +88,10 @@ object SongActions {
                 RingtoneManager.TYPE_RINGTONE,
                 newUri,
             )
-            toast(context, "已设为铃声")
+            toast(context, context.getString(R.string.song_action_ringtone_set))
             true
         }.getOrElse {
-            toast(context, "设置铃声失败")
+            toast(context, context.getString(R.string.song_action_ringtone_failed))
             false
         }
     }
@@ -104,9 +105,9 @@ object SongActions {
                 "${MediaStore.Audio.Media.DATA} = ?",
                 arrayOf(song.path),
             )
-            toast(context, "已删除文件")
+            toast(context, context.getString(R.string.song_action_deleted))
         } else {
-            toast(context, "删除失败，文件可能只读")
+            toast(context, context.getString(R.string.song_action_delete_failed))
         }
         return deleted
     }

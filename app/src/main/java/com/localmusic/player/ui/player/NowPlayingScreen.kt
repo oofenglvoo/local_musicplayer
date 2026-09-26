@@ -71,11 +71,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.localmusic.player.R
 import com.localmusic.player.data.AlbumArtSource
 import com.localmusic.player.data.toModel
 import com.localmusic.player.lyrics.LyricsInlineViewModel
@@ -157,7 +159,7 @@ fun NowPlayingScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(onClick = onCollapse) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                 }
                 Row(
                     modifier = Modifier.weight(1f),
@@ -165,7 +167,7 @@ fun NowPlayingScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        "歌曲",
+                        stringResource(R.string.library_tab_songs),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = if (page == 0) FontWeight.Bold else FontWeight.Normal,
                         color = if (page == 0) AppAccent else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -173,7 +175,7 @@ fun NowPlayingScreen(
                     )
                     Spacer(Modifier.width(24.dp))
                     Text(
-                        "歌词",
+                        stringResource(R.string.now_playing_lyrics),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = if (page == 1) FontWeight.Bold else FontWeight.Normal,
                         color = if (page == 1) AppAccent else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -181,7 +183,7 @@ fun NowPlayingScreen(
                     )
                 }
                 IconButton(onClick = onOpenQueue) {
-                    Icon(Icons.Default.QueueMusic, contentDescription = "播放队列")
+                    Icon(Icons.Default.QueueMusic, contentDescription = stringResource(R.string.now_playing_queue))
                 }
             }
 
@@ -196,7 +198,7 @@ fun NowPlayingScreen(
                             lyricsState.loading -> CircularProgressIndicator(color = AppAccent, modifier = Modifier.align(Alignment.Center))
                             lyrics != null -> SyncedLyrics(lyrics = lyrics)
                             else -> Text(
-                                "暂无歌词\n（可在歌曲同目录放置同名 .lrc 文件）",
+                                stringResource(R.string.now_playing_no_lyrics),
                                 style = MaterialTheme.typography.bodyMedium,
                                 textAlign = TextAlign.Center,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -224,7 +226,7 @@ fun NowPlayingScreen(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        nowPlaying.title.ifBlank { "未在播放" },
+                        nowPlaying.title.ifBlank { stringResource(R.string.meta_unknown_song) },
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
@@ -251,7 +253,9 @@ fun NowPlayingScreen(
                     ) {
                         Icon(
                             if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = "收藏",
+                            contentDescription = stringResource(
+                                if (isFavorite) R.string.song_menu_unfavorite else R.string.song_menu_favorite
+                            ),
                             tint = if (isFavorite) AppAccent
                             else MaterialTheme.colorScheme.onSurface,
                         )
@@ -259,7 +263,7 @@ fun NowPlayingScreen(
                     IconButton(onClick = { onOpenBookmarks(nowPlaying.songId) }) {
                         Icon(
                             Icons.Default.Bookmarks,
-                            contentDescription = "书签",
+                            contentDescription = stringResource(R.string.now_playing_bookmarks),
                             tint = MaterialTheme.colorScheme.onSurface,
                         )
                     }
@@ -279,14 +283,14 @@ fun NowPlayingScreen(
                 IconButton(onClick = { PlayerConnection.toggleShuffle() }) {
                     Icon(
                         Icons.Default.Shuffle,
-                        contentDescription = "随机播放",
+                        contentDescription = stringResource(R.string.common_shuffle),
                         tint = if (shuffle) AppAccent else MaterialTheme.colorScheme.onSurface,
                     )
                 }
                 IconButton(onClick = { PlayerConnection.previous() }) {
                     Icon(
                         Icons.Default.SkipPrevious,
-                        contentDescription = "上一首",
+                        contentDescription = stringResource(R.string.common_previous),
                         modifier = Modifier.size(40.dp),
                     )
                 }
@@ -302,7 +306,7 @@ fun NowPlayingScreen(
                 ) {
                     Icon(
                         if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = "播放/暂停",
+                        contentDescription = stringResource(R.string.common_play_pause),
                         tint = Color.Black,
                         modifier = Modifier.size(40.dp),
                     )
@@ -310,7 +314,7 @@ fun NowPlayingScreen(
                 IconButton(onClick = { PlayerConnection.next() }) {
                     Icon(
                         Icons.Default.SkipNext,
-                        contentDescription = "下一首",
+                        contentDescription = stringResource(R.string.common_next),
                         modifier = Modifier.size(40.dp),
                     )
                 }
@@ -320,7 +324,7 @@ fun NowPlayingScreen(
                             RepeatMode.ONE -> Icons.Default.RepeatOne
                             else -> Icons.Default.Repeat
                         },
-                        contentDescription = repeat.label,
+                        contentDescription = stringResource(repeat.labelRes),
                         tint = if (repeat != RepeatMode.OFF) AppAccent
                         else MaterialTheme.colorScheme.onSurface,
                     )
@@ -334,19 +338,20 @@ fun NowPlayingScreen(
             ) {
                 QuickAction(
                     icon = Icons.Default.Speed,
-                    label = if (speed == 1.0f) "倍速" else "${"%.2f".format(speed).trimEnd('0').trimEnd('.')}x",
+                    label = if (speed == 1.0f) stringResource(R.string.now_playing_speed)
+                    else "${"%.2f".format(speed).trimEnd('0').trimEnd('.')}x",
                     active = speed != 1.0f,
                     onClick = { showSpeedDialog = true },
                 )
                 QuickAction(
                     icon = Icons.Default.Bedtime,
-                    label = if (sleepActive) sleepRemainingText else "定时",
+                    label = if (sleepActive) sleepRemainingText else stringResource(R.string.now_playing_sleep_timer),
                     active = sleepActive,
                     onClick = { onOpenSleepTimer() },
                 )
                 QuickAction(
                     icon = Icons.Default.Equalizer,
-                    label = "音效",
+                    label = stringResource(R.string.now_playing_equalizer),
                     active = false,
                     onClick = { onOpenEqualizer() },
                 )
@@ -374,7 +379,7 @@ private fun SpeedDialog(
     val options = listOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f)
     androidx.compose.material3.AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("播放速度") },
+        title = { Text(stringResource(R.string.now_playing_speed_title)) },
         text = {
             Column {
                 options.forEach { option ->
@@ -400,7 +405,7 @@ private fun SpeedDialog(
             }
         },
         confirmButton = {
-            androidx.compose.material3.TextButton(onClick = onDismiss) { Text("关闭") }
+            androidx.compose.material3.TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) }
         },
     )
 }
@@ -439,12 +444,12 @@ private fun CreditsBlock(artist: String) {
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         Row {
             Text(
-                "作词：",
+                stringResource(R.string.now_playing_lyricist),
                 style = MaterialTheme.typography.bodyMedium,
                 color = AppAccent,
             )
             Text(
-                "网络佚名",
+                stringResource(R.string.now_playing_anonymous),
                 style = MaterialTheme.typography.bodyMedium,
                 color = AppAccent,
             )
@@ -452,12 +457,12 @@ private fun CreditsBlock(artist: String) {
         Spacer(Modifier.height(6.dp))
         Row {
             Text(
-                "作曲：",
+                stringResource(R.string.now_playing_composer),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
-                artist.ifBlank { "未知" },
+                artist.ifBlank { stringResource(R.string.common_unknown) },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -568,7 +573,7 @@ private fun VolumeButton(
         IconButton(onClick = { onExpandedChange(!expanded) }) {
             Icon(
                 Icons.Default.VolumeUp,
-                contentDescription = "音量",
+                contentDescription = stringResource(R.string.common_volume),
                 tint = if (expanded) AppAccent else MaterialTheme.colorScheme.onSurface,
             )
         }
@@ -706,7 +711,7 @@ private fun AlbumCover(
         if (model != null) {
             AsyncImage(
                 model = model,
-                contentDescription = "专辑封面",
+                contentDescription = stringResource(R.string.common_album_art),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -796,12 +801,12 @@ fun MiniPlayer(onExpand: () -> Unit, onOpenQueue: () -> Unit = {}) {
                 IconButton(onClick = { PlayerConnection.togglePlayPause() }) {
                     Icon(
                         if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = "播放/暂停",
+                        contentDescription = stringResource(R.string.common_play_pause),
                         tint = AppAccent,
                     )
                 }
                 IconButton(onClick = { PlayerConnection.next() }) {
-                    Icon(Icons.Default.SkipNext, contentDescription = "下一首")
+                    Icon(Icons.Default.SkipNext, contentDescription = stringResource(R.string.common_next))
                 }
             }
         }

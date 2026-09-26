@@ -9,12 +9,16 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.pow
 
-enum class ReplayGainMode(val key: String, val label: String, val preampDb: Float) {
-    OFF("off", "关闭", 0f),
-    TRACK("track", "按曲目", 0f),
-    ALBUM("album", "按专辑", 0f),
-    TRACK_PREVENT_CLIP("track_clip", "按曲目(防削波)", -2f),
-    ALBUM_PREVENT_CLIP("album_clip", "按专辑(防削波)", -2f);
+enum class ReplayGainMode(
+    val key: String,
+    @androidx.annotation.StringRes val labelRes: Int,
+    val preampDb: Float,
+) {
+    OFF("off", com.localmusic.player.R.string.replay_gain_off, 0f),
+    TRACK("track", com.localmusic.player.R.string.replay_gain_track, 0f),
+    ALBUM("album", com.localmusic.player.R.string.replay_gain_album, 0f),
+    TRACK_PREVENT_CLIP("track_clip", com.localmusic.player.R.string.replay_gain_track_clip, -2f),
+    ALBUM_PREVENT_CLIP("album_clip", com.localmusic.player.R.string.replay_gain_album_clip, -2f);
 
     companion object {
         fun from(key: String?): ReplayGainMode =

@@ -1,5 +1,7 @@
 package com.localmusic.player.data
 
+import androidx.annotation.StringRes
+import com.localmusic.player.R
 import com.localmusic.player.data.db.SongEntity
 
 data class AlbumGroup(
@@ -25,18 +27,18 @@ data class ArtistGroup(
 
 data class FolderGroup(
     val path: String,
-    val name: String,
+    val name: String?,
     val songs: List<SongEntity>,
 )
 
-enum class SongSort(val label: String) {
-    TITLE("标题"),
-    ARTIST("艺术家"),
-    ALBUM("专辑"),
-    DURATION("时长"),
-    DATE_ADDED("添加日期"),
-    YEAR("年份"),
-    PLAY_COUNT("播放次数"),
+enum class SongSort(@StringRes val labelRes: Int) {
+    TITLE(R.string.sort_title),
+    ARTIST(R.string.sort_artist),
+    ALBUM(R.string.sort_album),
+    DURATION(R.string.sort_duration),
+    DATE_ADDED(R.string.sort_date_added),
+    YEAR(R.string.sort_year),
+    PLAY_COUNT(R.string.sort_play_count),
 }
 
 object LibraryGrouper {
@@ -66,14 +68,17 @@ object LibraryGrouper {
             .sortedBy { it.artist.lowercase() }
 
     fun folders(songs: List<SongEntity>): List<FolderGroup> =
-        songs.groupBy { song ->
-            song.path.substringBeforeLast('/', "")
-        }
-            .map { (path, list) ->
+        folderGroups(songs.map { it.path.substringBeforeLast('/', "") })
+
+    fun folderGroups(paths: List<String>): List<FolderGroup> =
+        paths
+            .filter { it.isNotEmpty() }
+            .distinct()
+            .map { path ->
                 FolderGroup(
                     path = path,
-                    name = path.substringAfterLast('/').ifBlank { "根目录" },
-                    songs = list.sortedBy { it.title.lowercase() },
+                    name = path.substringAfterLast('/').ifBlank { null },
+                    songs = emptyList(),
                 )
             }
             .sortedBy { it.path.lowercase() }

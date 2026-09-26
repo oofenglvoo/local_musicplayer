@@ -40,20 +40,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.localmusic.player.R
 import com.localmusic.player.data.AlbumArtSource
 import com.localmusic.player.playback.PlayerConnection
 import com.localmusic.player.ui.Artwork
 import com.localmusic.player.ui.library.SectionHeader
 import com.localmusic.player.ui.SongRow
 
-private enum class SearchTab(val label: String) {
-    SONGS("歌曲"),
-    ALBUMS("专辑"),
-    ARTISTS("艺术家"),
+private enum class SearchTab(@androidx.annotation.StringRes val labelRes: Int) {
+    SONGS(com.localmusic.player.R.string.search_tab_songs),
+    ALBUMS(com.localmusic.player.R.string.search_tab_albums),
+    ARTISTS(com.localmusic.player.R.string.search_tab_artists),
 }
 
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
@@ -75,20 +77,20 @@ fun SearchScreen(
             TopAppBar(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 title = {
                     OutlinedTextField(
                         value = query,
                         onValueChange = { viewModel.setQuery(it) },
-                        placeholder = { Text("搜索歌曲、专辑、艺术家") },
+                        placeholder = { Text(stringResource(R.string.search_hint)) },
                         singleLine = true,
                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                         trailingIcon = {
                             if (query.isNotEmpty()) {
                                 IconButton(onClick = { viewModel.setQuery("") }) {
-                                    Icon(Icons.Default.Clear, contentDescription = "清除")
+                                    Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.common_clear_input))
                                 }
                             }
                         },
@@ -110,7 +112,7 @@ fun SearchScreen(
                 results.isEmpty -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
-                            "没有找到「$query」相关结果",
+                            stringResource(R.string.search_no_result, query),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -128,7 +130,7 @@ fun SearchScreen(
                                         SearchTab.ALBUMS -> results.albums.size
                                         SearchTab.ARTISTS -> results.artists.size
                                     }
-                                    Text("${t.label} $count")
+                                    Text(stringResource(R.string.search_tab_count, stringResource(t.labelRes), count))
                                 },
                             )
                         }
@@ -155,7 +157,7 @@ fun SearchScreen(
                                         onOpenAlbum(album.key)
                                     },
                                     headlineContent = { Text(album.album, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                                    supportingContent = { Text("${album.artist} · ${album.songs.size} 首") },
+                                    supportingContent = { Text(stringResource(R.string.search_album_subtitle, album.artist, album.songs.size)) },
                                     leadingContent = {
                                         Artwork(
                                             source = AlbumArtSource(album.artworkPath, album.albumId),
@@ -173,7 +175,7 @@ fun SearchScreen(
                                         onOpenArtist(artist.artist)
                                     },
                                     headlineContent = { Text(artist.artist, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                                    supportingContent = { Text("${artist.songs.size} 首 · ${artist.albumCount} 张专辑") },
+                                    supportingContent = { Text(stringResource(R.string.search_artist_subtitle, artist.songs.size, artist.albumCount)) },
                                     leadingContent = {
                                         Artwork(
                                             source = AlbumArtSource(artist.artworkPath, artist.representative?.albumId ?: 0L),
@@ -203,14 +205,14 @@ private fun SearchHistory(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("搜索历史", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.search_history), style = MaterialTheme.typography.titleMedium)
             if (history.isNotEmpty()) {
-                TextButton(onClick = onClear) { Text("清空") }
+                TextButton(onClick = onClear) { Text(stringResource(R.string.common_clear)) }
             }
         }
         if (history.isEmpty()) {
             Text(
-                "输入关键字开始搜索",
+                stringResource(R.string.search_empty_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 8.dp),

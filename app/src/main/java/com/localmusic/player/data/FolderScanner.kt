@@ -3,6 +3,7 @@ package com.localmusic.player.data
 import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.os.Build
+import com.localmusic.player.R
 import com.localmusic.player.data.db.SongEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
@@ -73,8 +74,8 @@ object FolderScanner {
         file: File,
     ): SongEntity {
         var title = file.nameWithoutExtension
-        var artist = "未知艺术家"
-        var album = "未知专辑"
+        var artist = context.getString(R.string.meta_unknown_artist)
+        var album = context.getString(R.string.meta_unknown_album)
         var duration = 0L
         var track = 0
         var year = 0

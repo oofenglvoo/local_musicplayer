@@ -31,7 +31,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.localmusic.player.R
 import com.localmusic.player.data.ArtworkCache
 import com.localmusic.player.data.db.SongEntity
 import com.localmusic.player.ui.SongArtwork
@@ -68,7 +70,7 @@ fun ArtworkPickerSheet(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("更换封面", style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.artwork_change_title), style = MaterialTheme.typography.titleLarge)
 
             if (previewUri != null) {
                 androidx.compose.foundation.Image(
@@ -95,7 +97,7 @@ fun ArtworkPickerSheet(
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedButton(onClick = { picker.launch("image/*") }) {
-                    Text("选择图片")
+                    Text(stringResource(R.string.artwork_pick_image))
                 }
             }
 
@@ -103,7 +105,7 @@ fun ArtworkPickerSheet(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
             ) {
-                TextButton(onClick = onDismiss) { Text("取消") }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
                 Button(
                     enabled = previewUri != null && !saving,
                     onClick = {
@@ -118,7 +120,7 @@ fun ArtworkPickerSheet(
                         }
                     },
                     modifier = Modifier.padding(start = 8.dp),
-                ) { Text(if (saving) "保存中…" else "保存") }
+                ) { Text(stringResource(if (saving) R.string.artwork_saving else R.string.common_save)) }
             }
         }
     }

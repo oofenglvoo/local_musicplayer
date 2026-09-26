@@ -19,8 +19,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.localmusic.player.R
 import com.localmusic.player.data.AlbumGroup
 import com.localmusic.player.data.FolderGroup
 import com.localmusic.player.playback.PlayerConnection
@@ -43,16 +45,16 @@ fun AutoListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("${kind.label} · ${songs.size}") },
+                title = { Text("${stringResource(kind.labelRes)} · ${songs.size}") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 actions = {
                     if (songs.isNotEmpty()) {
                         IconButton(onClick = { PlayerConnection.playSongs(songs, 0) }) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = "播放全部")
+                            Icon(Icons.Default.PlayArrow, contentDescription = stringResource(R.string.common_play_all))
                         }
                     }
                 },
@@ -61,7 +63,7 @@ fun AutoListScreen(
     ) { padding ->
         if (songs.isEmpty()) {
             Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-                EmptyHint("暂无歌曲")
+                EmptyHint(stringResource(R.string.library_empty_hint))
             }
         } else {
             LazyColumn(
@@ -96,17 +98,17 @@ fun AlbumDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(current?.album ?: "专辑") },
+                title = { Text(current?.album ?: stringResource(R.string.library_tab_albums)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 actions = {
                     val list = current?.songs
                     if (!list.isNullOrEmpty()) {
                         IconButton(onClick = { PlayerConnection.playSongsShuffled(list) }) {
-                            Icon(Icons.Default.Shuffle, contentDescription = "随机播放")
+                            Icon(Icons.Default.Shuffle, contentDescription = stringResource(R.string.common_shuffle_all))
                         }
                     }
                 },
@@ -115,7 +117,7 @@ fun AlbumDetailScreen(
     ) { padding ->
         if (current == null) {
             Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-                EmptyHint("未找到该专辑")
+                EmptyHint(stringResource(R.string.library_empty_hint))
             }
         } else {
             LazyColumn(
@@ -128,7 +130,7 @@ fun AlbumDetailScreen(
                         subtitle = buildString {
                             append(current.artist)
                             if (current.year > 0) append(" · ${current.year}")
-                            append(" · ${current.songs.size} 首")
+                            append(" · " + stringResource(R.string.playlist_song_count, current.songs.size))
                         },
                         artworkPath = current.artworkPath,
                         albumId = current.albumId,
@@ -165,17 +167,17 @@ fun ArtistDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(current?.artist ?: "艺术家") },
+                title = { Text(current?.artist ?: stringResource(R.string.library_tab_artists)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 actions = {
                     val list = current?.songs
                     if (!list.isNullOrEmpty()) {
                         IconButton(onClick = { PlayerConnection.playSongsShuffled(list) }) {
-                            Icon(Icons.Default.Shuffle, contentDescription = "随机播放")
+                            Icon(Icons.Default.Shuffle, contentDescription = stringResource(R.string.common_shuffle_all))
                         }
                     }
                 },
@@ -184,7 +186,7 @@ fun ArtistDetailScreen(
     ) { padding ->
         if (current == null) {
             Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-                EmptyHint("未找到该艺术家")
+                EmptyHint(stringResource(R.string.library_empty_hint))
             }
         } else {
             LazyColumn(
@@ -194,7 +196,7 @@ fun ArtistDetailScreen(
                 item {
                     PlayableHeader(
                         title = current.artist,
-                        subtitle = "${current.songs.size} 首 · ${current.albumCount} 张专辑",
+                        subtitle = stringResource(R.string.search_artist_subtitle, current.songs.size, current.albumCount),
                         artworkPath = current.artworkPath,
                         albumId = current.representative?.albumId ?: 0L,
                         onPlayAll = { PlayerConnection.playSongs(current.songs, 0) },
@@ -223,15 +225,22 @@ fun FolderDetailScreen(
 ) {
     val folders by viewModel.folders.collectAsStateWithLifecycle()
     val favoriteIds by viewModel.favoriteIds.collectAsStateWithLifecycle()
+    val folderSongs by viewModel.songsInFolder(folderPath)
+        .collectAsStateWithLifecycle(emptyList())
     val folder: FolderGroup? = folders.firstOrNull { it.path == folderPath }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(folder?.name ?: "文件夹") },
+                title = {
+                    Text(
+                        folder?.name
+                            ?: folderPath.substringAfterLast('/').ifBlank { stringResource(R.string.library_tab_folders) }
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
             )
@@ -239,19 +248,19 @@ fun FolderDetailScreen(
     ) { padding ->
         if (folder == null) {
             Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-                EmptyHint("未找到该文件夹")
+                EmptyHint(stringResource(R.string.library_empty_hint))
             }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentPadding = PaddingValues(bottom = 8.dp),
             ) {
-                itemsIndexed(folder.songs, key = { _, s -> s.id }) { index, song ->
+                itemsIndexed(folderSongs, key = { _, s -> s.id }) { index, song ->
                     SongRow(
                         song = song,
                         isFavorite = song.id in favoriteIds,
                         onFavoriteClick = { viewModel.toggleFavorite(song.id) },
-                        onClick = { PlayerConnection.playSongs(folder.songs, index) },
+                        onClick = { PlayerConnection.playSongs(folderSongs, index) },
                     )
                 }
             }

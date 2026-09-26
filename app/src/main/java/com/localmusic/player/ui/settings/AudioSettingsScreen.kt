@@ -32,9 +32,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.localmusic.player.R
 import com.localmusic.player.playback.ReplayGainMode
 import com.localmusic.player.playback.SleepTimerController
 
@@ -56,10 +58,10 @@ fun AudioSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("音效与定时") },
+                title = { Text(stringResource(R.string.audio_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
             )
@@ -73,9 +75,9 @@ fun AudioSettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("播放速度", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.audio_speed), style = MaterialTheme.typography.titleMedium)
             Text(
-                "当前 ${"%.2f".format(speed)}x",
+                stringResource(R.string.audio_current_speed, "%.2f".format(speed)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -92,9 +94,9 @@ fun AudioSettingsScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column {
-                    Text("跳过静音", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.audio_skip_silence), style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "自动跳过音频中的静音片段",
+                        stringResource(R.string.audio_skip_silence_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -105,9 +107,9 @@ fun AudioSettingsScreen(
                 )
             }
 
-            Text("交叉淡入淡出", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.audio_crossfade), style = MaterialTheme.typography.titleMedium)
             Text(
-                if (crossfadeMs == 0) "关闭" else "${crossfadeMs} ms",
+                if (crossfadeMs == 0) stringResource(R.string.common_close) else stringResource(R.string.audio_crossfade_ms, crossfadeMs),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -118,12 +120,12 @@ fun AudioSettingsScreen(
                 steps = 19,
             )
 
-            Text("ReplayGain 音量归一化", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.audio_replay_gain), style = MaterialTheme.typography.titleMedium)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ReplayGainMode.entries.forEach { mode ->
                     AssistChip(
                         onClick = { viewModel.setReplayGain(mode) },
-                        label = { Text(mode.label) },
+                        label = { Text(stringResource(mode.labelRes)) },
                         leadingIcon = if (replayGain == mode) {
                             { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
                         } else null,
@@ -139,9 +141,10 @@ fun AudioSettingsScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column {
-                    Text("启用音效", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.audio_enable), style = MaterialTheme.typography.titleMedium)
                     Text(
-                        if (effects.available) "均衡器 / 低音增强 / 环绕音" else "当前音频会话不可用",
+                        if (effects.available) stringResource(R.string.audio_available)
+                        else stringResource(R.string.audio_unavailable),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -156,7 +159,7 @@ fun AudioSettingsScreen(
             HorizontalDivider()
 
             if (effects.available) {
-                Text("均衡器预设", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.audio_eq_preset), style = MaterialTheme.typography.titleMedium)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     effects.presetNames.forEachIndexed { index, name ->
                         AssistChip(
@@ -166,14 +169,14 @@ fun AudioSettingsScreen(
                     }
                 }
 
-                Text("频段调节", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.audio_band_adjust), style = MaterialTheme.typography.titleMedium)
                 effects.bands.forEach { band ->
                     var value by remember(band.index, band.levelDb) {
                         mutableFloatStateOf(band.levelDb.toFloat())
                     }
                     Column {
                         Text(
-                            "${band.centerFreqHz} Hz",
+                            stringResource(R.string.audio_freq_hz, band.centerFreqHz),
                             style = MaterialTheme.typography.labelMedium,
                         )
                         Slider(
@@ -190,7 +193,7 @@ fun AudioSettingsScreen(
                 HorizontalDivider()
 
                 if (effects.bassAvailable) {
-                    Text("低音增强", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.audio_bass_boost), style = MaterialTheme.typography.titleMedium)
                     Slider(
                         value = effects.bassStrength.toFloat(),
                         onValueChange = { viewModel.setBass(it.toInt().toShort()) },
@@ -199,7 +202,7 @@ fun AudioSettingsScreen(
                 }
 
                 if (effects.virtualizerAvailable) {
-                    Text("环绕音效", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.audio_virtualizer), style = MaterialTheme.typography.titleMedium)
                     Slider(
                         value = effects.virtualizerStrength.toFloat(),
                         onValueChange = { viewModel.setVirtualizer(it.toInt().toShort()) },
@@ -208,7 +211,7 @@ fun AudioSettingsScreen(
                 }
 
                 if (effects.loudnessAvailable) {
-                    Text("音量增强", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.audio_loudness), style = MaterialTheme.typography.titleMedium)
                     Slider(
                         value = effects.loudnessGainMb.toFloat(),
                         onValueChange = { viewModel.setLoudness(it.toInt()) },
@@ -219,33 +222,33 @@ fun AudioSettingsScreen(
                 HorizontalDivider()
             }
 
-            Text("睡眠定时", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.sleep_timer_title), style = MaterialTheme.typography.titleMedium)
             if (sleepActive) {
                 Text(
-                    if (remainingTracks > 0) "剩余 $remainingTracks 首后暂停"
-                    else "剩余 ${formatMs(sleepRemaining)}，到点自动暂停",
+                    if (remainingTracks > 0) stringResource(R.string.audio_sleep_tracks_remaining, remainingTracks)
+                    else stringResource(R.string.audio_sleep_time_remaining, formatMs(sleepRemaining)),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
                 Button(onClick = { viewModel.cancelSleepTimer() }) {
-                    Text("取消定时")
+                    Text(stringResource(R.string.sleep_timer_cancel))
                 }
             } else {
-                Text("按分钟", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(R.string.audio_sleep_by_minutes), style = MaterialTheme.typography.labelLarge)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(15, 30, 45, 60).forEach { minutes ->
                         AssistChip(
                             onClick = { viewModel.startSleepTimer(minutes) },
-                            label = { Text("$minutes 分钟") },
+                            label = { Text(stringResource(R.string.audio_sleep_minutes, minutes)) },
                         )
                     }
                 }
-                Text("按曲数", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(R.string.audio_sleep_by_tracks), style = MaterialTheme.typography.labelLarge)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(1, 3, 5, 10).forEach { count ->
                         AssistChip(
                             onClick = { viewModel.startSleepTimerByTracks(count) },
-                            label = { Text("$count 首") },
+                            label = { Text(stringResource(R.string.audio_sleep_count, count)) },
                         )
                     }
                 }

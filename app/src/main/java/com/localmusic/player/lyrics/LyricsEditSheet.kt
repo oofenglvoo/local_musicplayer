@@ -21,8 +21,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.localmusic.player.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,9 +47,9 @@ fun LyricsEditSheet(
                 .padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("编辑歌词", style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.lyrics_edit_title), style = MaterialTheme.typography.titleLarge)
             Text(
-                if (state.lrcPath.isBlank()) "将新建同名 .lrc 文件"
+                if (state.lrcPath.isBlank()) stringResource(R.string.lyrics_edit_new_file_hint)
                 else state.lrcPath,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -56,14 +58,14 @@ fun LyricsEditSheet(
             OutlinedTextField(
                 value = state.content,
                 onValueChange = { viewModel.updateContent(it) },
-                label = { Text("LRC 歌词内容") },
-                placeholder = { Text("[00:00.00]歌词第一行\n[00:05.00]歌词第二行") },
+                label = { Text(stringResource(R.string.lyrics_edit_content_label)) },
+                placeholder = { Text(stringResource(R.string.lyrics_edit_content_hint)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 200.dp, max = 360.dp),
             )
 
-            Text("歌词时间偏移：${state.offsetMs} ms", style = MaterialTheme.typography.titleSmall)
+            Text(stringResource(R.string.lyrics_edit_offset, state.offsetMs), style = MaterialTheme.typography.titleSmall)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = { viewModel.adjustOffset(-500) }) { Text("-0.5s") }
                 OutlinedButton(onClick = { viewModel.adjustOffset(-100) }) { Text("-0.1s") }
@@ -71,7 +73,7 @@ fun LyricsEditSheet(
                 OutlinedButton(onClick = { viewModel.adjustOffset(500) }) { Text("+0.5s") }
             }
             Text(
-                "正值表示歌词延后显示",
+                stringResource(R.string.lyrics_edit_offset_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -87,11 +89,11 @@ fun LyricsEditSheet(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
             ) {
-                TextButton(onClick = onDismiss) { Text("关闭") }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_close)) }
                 Button(
                     onClick = { viewModel.save(onSaved) },
                     modifier = Modifier.padding(start = 8.dp),
-                ) { Text("保存") }
+                ) { Text(stringResource(R.string.common_save)) }
             }
         }
     }

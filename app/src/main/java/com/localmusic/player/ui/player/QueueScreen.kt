@@ -34,10 +34,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.localmusic.player.R
 import com.localmusic.player.playback.PlayerConnection
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,17 +61,17 @@ fun QueueScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("播放队列 · ${queue.size}") },
+                title = { Text(stringResource(R.string.queue_title_count, queue.size)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 actions = {
                     IconButton(onClick = { PlayerConnection.toggleShuffle() }) {
                         Icon(
                             Icons.Default.Shuffle,
-                            contentDescription = "随机",
+                            contentDescription = stringResource(R.string.common_shuffle),
                             tint = if (shuffle) MaterialTheme.colorScheme.primary
                             else MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -83,7 +85,7 @@ fun QueueScreen(onBack: () -> Unit) {
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentAlignment = Alignment.Center,
             ) {
-                Text("播放队列为空", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.queue_empty), style = MaterialTheme.typography.bodyMedium)
             }
         } else {
             LazyColumn(
@@ -126,7 +128,7 @@ fun QueueScreen(onBack: () -> Unit) {
                             ) {
                                 Icon(
                                     Icons.Default.DragHandle,
-                                    contentDescription = "移动",
+                                    contentDescription = stringResource(R.string.queue_move),
                                     tint = if (dragFrom == index) MaterialTheme.colorScheme.primary
                                     else MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -134,7 +136,7 @@ fun QueueScreen(onBack: () -> Unit) {
                         },
                         trailingContent = {
                             IconButton(onClick = { PlayerConnection.removeQueueItem(index) }) {
-                                Icon(Icons.Default.Close, contentDescription = "移除")
+                                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_remove))
                             }
                         },
                     )

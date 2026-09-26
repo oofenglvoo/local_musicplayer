@@ -2,4 +2,413 @@
 <resources>
     <string name="app_name">本地播放器</string>
     <string name="widget_name">本地播放器小组件</string>
+    <string name="widget_open_app">点击打开应用</string>
+
+    <!-- 通用 -->
+    <string name="common_back">返回</string>
+    <string name="common_cancel">取消</string>
+    <string name="common_confirm">确定</string>
+    <string name="common_delete">删除</string>
+    <string name="common_create">创建</string>
+    <string name="common_new">新建</string>
+    <string name="common_save">保存</string>
+    <string name="common_close">关闭</string>
+    <string name="common_clear">清空</string>
+    <string name="common_clear_input">清除</string>
+    <string name="common_settings">设置</string>
+    <string name="common_search">搜索</string>
+    <string name="common_play">播放</string>
+    <string name="common_shuffle">随机</string>
+    <string name="common_all">全部</string>
+    <string name="common_none">无</string>
+    <string name="common_retry">重试</string>
+    <string name="common_unknown">未知</string>
+    <string name="common_more">更多</string>
+    <string name="common_edit">编辑</string>
+    <string name="common_play_all">播放全部</string>
+    <string name="common_shuffle_all">随机播放</string>
+    <string name="common_add">添加</string>
+    <string name="common_apply">应用</string>
+    <string name="common_remove">移除</string>
+    <string name="common_previous">上一首</string>
+    <string name="common_next">下一首</string>
+    <string name="common_play_pause">播放/暂停</string>
+    <string name="common_volume">音量</string>
+    <string name="common_album_art">专辑封面</string>
+    <string name="common_playlist">播放列表</string>
+    <string name="common_add_songs">添加歌曲</string>
+    <string name="common_play_all_alt">播放全部</string>
+    <string name="common_reorder">调整顺序</string>
+    <string name="common_mix">混音</string>
+    <string name="common_browse_play">浏览并播放</string>
+    <string name="common_quick_entry">快速入口</string>
+    <string name="common_all_songs">全部歌曲</string>
+    <string name="common_no_match_song">没有匹配的歌曲</string>
+    <string name="common_no_local_music">未发现本地音乐，点击右上角扫描目录</string>
+    <string name="common_no_albums">暂无专辑</string>
+    <string name="common_no_artists">暂无艺术家</string>
+    <string name="common_no_folders">暂无文件夹</string>
+    <string name="common_sort_prefix">排序：</string>
+
+    <!-- 歌曲详情字段 -->
+    <string name="detail_field_album">专辑</string>
+    <string name="detail_field_duration">时长</string>
+    <string name="detail_field_format">格式</string>
+    <string name="detail_field_bitrate">比特率</string>
+    <string name="detail_field_sample_rate">采样率</string>
+    <string name="detail_field_size">文件大小</string>
+    <string name="detail_field_year">年份</string>
+    <string name="detail_field_track">音轨</string>
+    <string name="detail_field_disc">唱片</string>
+    <string name="detail_field_play_count">播放次数</string>
+    <string name="detail_field_path">文件路径</string>
+    <string name="detail_play_count_value">%d 次</string>
+    <string name="detail_created_at">%s 创建</string>
+    <string name="detail_remove_confirm">将「%s」从该播放列表移除？（不会删除文件）</string>
+    <string name="detail_add_count">添加（%d）</string>
+    <string name="playlist_rename_title">重命名播放列表</string>
+
+    <!-- 通知 -->
+    <string name="notification_channel_name">播放控制</string>
+    <string name="notification_channel_desc">显示当前播放的歌曲与控制按钮</string>
+
+    <!-- 未知元数据 -->
+    <string name="meta_unknown_song">未知歌曲</string>
+    <string name="meta_unknown_artist">未知艺术家</string>
+    <string name="meta_unknown_album">未知专辑</string>
+
+    <!-- 底部导航 -->
+    <string name="tab_home">首页</string>
+    <string name="tab_local">本地</string>
+    <string name="tab_playlists">歌单</string>
+    <string name="tab_profile">我的</string>
+
+    <!-- 排序 -->
+    <string name="sort_title">标题</string>
+    <string name="sort_artist">艺术家</string>
+    <string name="sort_album">专辑</string>
+    <string name="sort_duration">时长</string>
+    <string name="sort_date_added">添加日期</string>
+    <string name="sort_year">年份</string>
+    <string name="sort_play_count">播放次数</string>
+
+    <!-- 库标签 -->
+    <string name="library_tab_songs">歌曲</string>
+    <string name="library_tab_albums">专辑</string>
+    <string name="library_tab_artists">艺术家</string>
+    <string name="library_tab_folders">文件夹</string>
+    <string name="library_tab_playlists">播放列表</string>
+    <string name="library_root_folder">根目录</string>
+
+    <!-- 播放模式 -->
+    <string name="repeat_off">顺序播放</string>
+    <string name="repeat_all">列表循环</string>
+    <string name="repeat_one">单曲循环</string>
+
+    <!-- ReplayGain -->
+    <string name="replay_gain_off">关闭</string>
+    <string name="replay_gain_track">按曲目</string>
+    <string name="replay_gain_album">按专辑</string>
+    <string name="replay_gain_track_clip">按曲目(防削波)</string>
+    <string name="replay_gain_album_clip">按专辑(防削波)</string>
+
+    <!-- 权限 -->
+    <string name="permission_audio_rationale">需要访问音频文件权限才能扫描本地音乐</string>
+    <string name="permission_grant">授予权限</string>
+
+    <!-- 本地 -->
+    <string name="local_title">本地</string>
+    <string name="local_scanning">正在扫描音乐库…</string>
+    <string name="local_empty">暂无本地歌曲</string>
+    <string name="local_start_scan">开始扫描</string>
+    <string name="local_pick_folder">选择目录</string>
+    <string name="local_song_count">%d 首本地歌曲</string>
+
+    <!-- 库 -->
+    <string name="library_title">你的音乐</string>
+    <string name="library_rescan">重新扫描</string>
+    <string name="library_refreshed">已更新音乐库，共 %d 首</string>
+    <string name="library_selected_count">已选 %d 首</string>
+    <string name="library_deselect">取消选择</string>
+    <string name="library_select_all">全选</string>
+    <string name="library_add_to_playlist">添加到播放列表</string>
+    <string name="library_play_next">下一首播放</string>
+    <string name="library_add_to_queue">加入队列</string>
+    <string name="library_add_to_playlist_title">添加到播放列表（%d 首）</string>
+    <string name="library_no_playlists">暂无播放列表</string>
+    <string name="library_delete_files_title">删除文件</string>
+    <string name="library_delete_files_message">确定要永久删除所选的 %d 首歌曲吗？此操作不可恢复。</string>
+    <string name="library_no_playlists_hint">还没有播放列表，点击右下角新建</string>
+    <string name="library_new_playlist">新建播放列表</string>
+    <string name="library_playlist_name">播放列表名称</string>
+    <string name="library_empty_hint">这里还没有内容</string>
+
+    <!-- 文件夹浏览 -->
+    <string name="folder_roots">存储根目录</string>
+    <string name="folder_use_current">使用当前目录</string>
+    <string name="folder_empty">此目录下没有子文件夹</string>
+    <string name="folder_parent">上级目录</string>
+
+    <!-- 搜索 -->
+    <string name="search_hint">搜索歌曲、专辑、艺术家</string>
+    <string name="search_history">搜索历史</string>
+    <string name="search_empty_hint">输入关键字开始搜索</string>
+    <string name="search_no_result">没有找到「%s」相关结果</string>
+    <string name="search_tab_songs">歌曲</string>
+    <string name="search_tab_albums">专辑</string>
+    <string name="search_tab_artists">艺术家</string>
+    <string name="search_tab_count">%1$s %2$d</string>
+    <string name="search_album_subtitle">%1$s · %2$d 首</string>
+    <string name="search_artist_subtitle">%1$d 首 · %2$d 张专辑</string>
+
+    <!-- 播放页 -->
+    <string name="now_playing_speed">倍速</string>
+    <string name="now_playing_sleep_timer">定时</string>
+    <string name="now_playing_equalizer">音效</string>
+    <string name="now_playing_bookmarks">书签</string>
+    <string name="now_playing_queue">播放队列</string>
+    <string name="now_playing_lyrics">歌词</string>
+    <string name="now_playing_no_lyrics">暂无歌词</string>
+    <string name="now_playing_speed_title">播放速度</string>
+    <string name="now_playing_speed_value">%sx</string>
+    <string name="now_playing_lyricist">作词：</string>
+    <string name="now_playing_composer">作曲：</string>
+    <string name="now_playing_anonymous">网络佚名</string>
+
+    <!-- 队列 -->
+    <string name="queue_title">播放队列</string>
+
+    <!-- 书签 -->
+    <string name="bookmarks_title">书签</string>
+    <string name="bookmarks_empty">还没有书签</string>
+    <string name="bookmarks_add">添加书签</string>
+    <string name="bookmarks_label_hint">书签名称</string>
+    <string name="bookmarks_delete">删除书签</string>
+
+    <!-- 歌单 -->
+    <string name="playlist_hub_title">歌单</string>
+    <string name="playlist_favorites">我喜欢的音乐</string>
+    <string name="playlist_rename">重命名</string>
+    <string name="playlist_delete">删除歌单</string>
+    <string name="playlist_delete_confirm">确定删除播放列表「%s」吗？</string>
+    <string name="playlist_song_count">%d 首</string>
+    <string name="playlist_empty">这个歌单还没有歌曲</string>
+    <string name="playlist_add_songs">添加歌曲</string>
+    <string name="playlist_remove_from">从歌单移除</string>
+    <string name="playlist_remove_confirm">从当前歌单移除 %d 首歌曲？</string>
+    <string name="playlist_new">新建播放列表</string>
+    <string name="playlist_name_hint">播放列表名称</string>
+    <string name="playlist_created">已创建「%s」</string>
+
+    <!-- 我的 -->
+    <string name="profile_title">我的</string>
+    <string name="profile_most_played">我的常听</string>
+    <string name="profile_recently_played">最近播放</string>
+    <string name="profile_favorites">我喜欢的音乐</string>
+    <string name="profile_local_music">本地音乐</string>
+
+    <!-- 自动列表 -->
+    <string name="autolist_most_played">我的常听</string>
+    <string name="autolist_recently_added">最近添加</string>
+    <string name="autolist_recently_played">最近播放</string>
+    <string name="autolist_empty">暂无内容</string>
+
+    <!-- 歌曲菜单 -->
+    <string name="song_menu_play_next">下一首播放</string>
+    <string name="song_menu_add_queue">加入播放队列</string>
+    <string name="song_menu_add_playlist">添加到播放列表</string>
+    <string name="song_menu_favorite">收藏</string>
+    <string name="song_menu_unfavorite">取消收藏</string>
+    <string name="song_menu_edit_lyrics">编辑歌词</string>
+    <string name="song_menu_change_artwork">更换封面</string>
+    <string name="song_menu_details">歌曲信息</string>
+    <string name="song_menu_share">分享</string>
+    <string name="song_menu_set_ringtone">设为铃声</string>
+    <string name="song_menu_delete">删除</string>
+    <string name="song_menu_added_next">已加入下一首播放</string>
+    <string name="song_menu_added_queue">已加入播放队列</string>
+    <string name="song_menu_added_playlist">已添加 %1$d 首到「%2$s」</string>
+    <string name="song_menu_created_playlist">已创建「%1$s」并添加 %2$d 首</string>
+    <string name="song_menu_artwork_updated">已更新封面</string>
+    <string name="song_menu_deleted">已删除 %d 首歌曲</string>
+    <string name="song_menu_delete_confirm">确定要永久删除「%s」吗？此操作不可恢复。</string>
+
+    <!-- 歌曲操作（分享 / 铃声 / 删除） -->
+    <string name="song_action_file_missing">文件不存在</string>
+    <string name="song_action_share_title">分享歌曲</string>
+    <string name="song_action_no_share_app">没有可用的分享应用</string>
+    <string name="song_action_need_write_settings">需要授予“修改系统设置”权限</string>
+    <string name="song_action_ringtone_set">已设为铃声</string>
+    <string name="song_action_ringtone_failed">设置铃声失败</string>
+    <string name="song_action_deleted">已删除文件</string>
+    <string name="song_action_delete_failed">删除失败，文件可能只读</string>
+
+    <!-- 封面选择 -->
+    <string name="artwork_picker_title">选择封面</string>
+    <string name="artwork_picker_from_file">从文件选择</string>
+    <string name="artwork_picker_reset">恢复默认封面</string>
+    <string name="artwork_picker_embedded">使用内嵌封面</string>
+
+    <!-- 歌词编辑 -->
+    <string name="lyrics_edit_title">编辑歌词</string>
+    <string name="lyrics_edit_new_file_hint">将新建同名 .lrc 文件</string>
+    <string name="lyrics_edit_content_label">LRC 歌词内容</string>
+    <string name="lyrics_edit_content_hint">[00:00.00]歌词第一行\n[00:05.00]歌词第二行</string>
+    <string name="lyrics_edit_offset">歌词时间偏移：%d ms</string>
+    <string name="lyrics_edit_offset_hint">正值表示歌词延后显示</string>
+    <string name="lyrics_edit_song_missing">找不到歌曲</string>
+    <string name="lyrics_edit_offset_message">歌词偏移 %d ms</string>
+    <string name="lyrics_edit_saved">歌词已保存</string>
+    <string name="lyrics_edit_save_failed">保存失败</string>
+
+    <!-- 歌曲详情 -->
+    <string name="song_detail_title">歌曲信息</string>
+    <string name="song_detail_path">文件路径</string>
+    <string name="song_detail_size">文件大小</string>
+    <string name="song_detail_duration">时长</string>
+    <string name="song_detail_format">格式</string>
+    <string name="song_detail_added">添加时间</string>
+    <string name="song_detail_never_played">从未播放</string>
+    <string name="song_detail_play_count">播放次数</string>
+
+    <!-- 设置 -->
+    <string name="settings_title">设置</string>
+    <string name="settings_audio">音效与播放</string>
+    <string name="settings_theme">外观</string>
+    <string name="settings_library">音乐库</string>
+    <string name="settings_about">关于</string>
+    <string name="settings_theme_mode">主题模式</string>
+    <string name="settings_theme_system">跟随系统</string>
+    <string name="settings_theme_light">浅色</string>
+    <string name="settings_theme_dark">深色</string>
+    <string name="settings_dynamic_color">动态取色</string>
+    <string name="settings_dynamic_color_desc">根据封面或种子色生成配色</string>
+    <string name="settings_seed_color">主题种子色</string>
+    <string name="settings_playback_speed">默认播放速度</string>
+    <string name="settings_skip_silence">跳过静音</string>
+    <string name="settings_sleep_timer">睡眠定时</string>
+    <string name="settings_sleep_timer_off">关闭</string>
+    <string name="settings_replay_gain">音量标准化</string>
+    <string name="settings_crossfade">淡入淡出</string>
+    <string name="settings_crossfade_none">关闭</string>
+    <string name="settings_equalizer">均衡器</string>
+    <string name="settings_bass_boost">低音增强</string>
+    <string name="settings_loudness">响度增强</string>
+    <string name="settings_scanned_folders">已扫描目录</string>
+    <string name="settings_excluded_folders">排除目录</string>
+    <string name="settings_add_folder">添加目录</string>
+    <string name="settings_no_folders">暂无目录</string>
+    <string name="settings_min_duration">最短时长</string>
+    <string name="settings_version">版本</string>
+    <string name="profile_guest">游客</string>
+    <string name="profile_new_playlist_plus">+新建歌单</string>
+    <string name="profile_no_history">还没有播放记录</string>
+    <string name="library_ignore_short">忽略短音频</string>
+    <string name="library_ignore_short_desc">扫描时跳过时长低于该值的音频文件</string>
+    <string name="library_min_duration_none">不过滤</string>
+    <string name="library_min_duration_sec">%d 秒</string>
+    <string name="library_scan_folders">扫描目录</string>
+    <string name="library_no_scan_folder">尚未手动添加扫描目录（默认扫描媒体库）</string>
+    <string name="library_excluded_folders">排除目录</string>
+    <string name="library_excluded_desc">扫描时会跳过这些目录</string>
+    <string name="library_add_excluded_folder">添加排除目录</string>
+    <string name="library_no_excluded">没有排除任何目录</string>
+    <string name="folder_pick_title">选择音乐目录</string>
+    <string name="folder_granted_hint">存储根目录</string>
+    <string name="folder_scanned_title">已扫描目录</string>
+    <string name="folder_audio_count">%d 个音频文件</string>
+    <string name="folder_up">上一级</string>
+    <string name="folder_scan_current">扫描当前目录</string>
+    <string name="folder_exclude_current">排除当前目录</string>
+    <string name="settings_personalize">个性化你的播放器</string>
+    <string name="settings_theme_subtitle">主题、强调色、播放背景与布局</string>
+    <string name="settings_audio_subtitle">均衡器、速度、交叉淡入淡出、ReplayGain</string>
+    <string name="settings_library_subtitle">扫描目录、排除目录、忽略短音频</string>
+    <string name="settings_about_subtitle">版本信息与开源许可</string>
+    <string name="common_previous_level">上一级</string>
+    <string name="about_app_name">本地音乐播放器</string>
+    <string name="about_version_full">版本 %s</string>
+    <string name="about_desc">一款纯本地的 Android 音乐播放器，不上传、不联网，所有数据保存在设备本地。</string>
+    <string name="about_oss">开源组件</string>
+    <string name="home_search_hint">搜索歌曲</string>
+    <string name="home_empty">暂无本地歌曲，去「本地」扫描</string>
+    <string name="home_no_match">没有匹配的歌曲</string>
+    <string name="queue_title_count">播放队列 · %d</string>
+    <string name="queue_empty">播放队列为空</string>
+    <string name="queue_move">移动</string>
+    <string name="artwork_change_title">更换封面</string>
+    <string name="artwork_pick_image">选择图片</string>
+    <string name="artwork_saving">保存中…</string>
+    <string name="folder_scanned_message">已扫描 %1$s，音乐库共 %2$d 首</string>
+    <string name="folder_excluded_message">已排除 %1$s，音乐库共 %2$d 首</string>
+    <string name="folder_removed_message">已移除目录并更新音乐库</string>
+    <string name="folder_rescan_message">重新扫描完成，共 %d 首</string>
+    <string name="lyrics_song_missing">找不到歌曲</string>
+    <string name="lyrics_offset_message">歌词偏移 %d ms</string>
+    <string name="lyrics_saved">歌词已保存</string>
+    <string name="lyrics_save_failed">保存失败</string>
+    <string name="settings_black">纯黑</string>
+    <string name="settings_background">播放背景</string>
+    <string name="settings_background_desc">播放页和全局界面的沉浸式背景</string>
+    <string name="settings_background_pick">选择本地图片</string>
+    <string name="settings_background_change">更换背景图片</string>
+    <string name="settings_gradient">渐变色</string>
+    <string name="settings_blur">背景模糊：%d</string>
+    <string name="settings_dim">背景暗度：%d%%</string>
+    <string name="settings_dynamic_color_full">动态取色</string>
+    <string name="settings_dynamic_color_full_desc">使用壁纸颜色生成主题（Android 12+）</string>
+    <string name="settings_accent">强调色</string>
+    <string name="settings_album_grid">专辑网格布局</string>
+    <string name="settings_album_grid_desc">专辑列表以网格方式展示</string>
+    <string name="background_artwork">封面动态</string>
+    <string name="background_local_image">本地图片</string>
+    <string name="background_gradient">渐变</string>
+    <string name="background_solid">纯色</string>
+
+    <!-- 歌单页 -->
+    <string name="playlist_new_short">新建歌单</string>
+    <string name="playlist_name_short">歌单名称</string>
+    <string name="playlist_actions">歌单操作</string>
+    <string name="playlist_delete_short">删除歌单</string>
+    <string name="playlist_delete_confirm_short">确定删除「%s」吗？歌曲文件不会被删除。</string>
+    <string name="playlist_mine">我的歌单</string>
+    <string name="playlist_favorites_subtitle">收藏的歌曲都在这里</string>
+
+    <!-- 关于 -->
+    <string name="about_title">关于</string>
+    <string name="about_version">版本 %s</string>
+    <string name="about_description">一个简洁的本地音乐播放器</string>
+
+    <!-- 睡眠定时 -->
+    <string name="sleep_timer_title">睡眠定时</string>
+    <string name="sleep_timer_minutes">%d 分钟后停止</string>
+    <string name="sleep_timer_active">将在 %s 后停止播放</string>
+    <string name="sleep_timer_cancel">取消定时</string>
+
+    <!-- 音频设置细节 -->
+    <string name="audio_effects">音效</string>
+    <string name="audio_playback">播放</string>
+    <string name="audio_title">音效与定时</string>
+    <string name="audio_speed">播放速度</string>
+    <string name="audio_current_speed">当前 %sx</string>
+    <string name="audio_skip_silence">跳过静音</string>
+    <string name="audio_skip_silence_desc">自动跳过音频中的静音片段</string>
+    <string name="audio_crossfade">交叉淡入淡出</string>
+    <string name="audio_crossfade_ms">%d ms</string>
+    <string name="audio_replay_gain">ReplayGain 音量归一化</string>
+    <string name="audio_enable">启用音效</string>
+    <string name="audio_available">均衡器 / 低音增强 / 环绕音</string>
+    <string name="audio_unavailable">当前音频会话不可用</string>
+    <string name="audio_eq_preset">均衡器预设</string>
+    <string name="audio_band_adjust">频段调节</string>
+    <string name="audio_bass_boost">低音增强</string>
+    <string name="audio_virtualizer">环绕音效</string>
+    <string name="audio_loudness">音量增强</string>
+    <string name="audio_sleep_tracks_remaining">剩余 %d 首后暂停</string>
+    <string name="audio_sleep_time_remaining">剩余 %s，到点自动暂停</string>
+    <string name="audio_sleep_by_minutes">按分钟</string>
+    <string name="audio_sleep_by_tracks">按曲数</string>
+    <string name="audio_sleep_minutes">%d 分钟</string>
+    <string name="audio_sleep_count">%d 首</string>
+    <string name="audio_freq_hz">%d Hz</string>
 </resources>

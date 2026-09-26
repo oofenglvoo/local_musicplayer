@@ -36,10 +36,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.localmusic.player.R
 import com.localmusic.player.data.AlbumGroup
 import com.localmusic.player.data.ArtistGroup
 import com.localmusic.player.data.FolderGroup
@@ -68,7 +70,7 @@ fun LocalScreen(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 androidx.compose.material3.CircularProgressIndicator(color = AppAccent)
                 Spacer(Modifier.height(16.dp))
-                Text("正在扫描音乐库…", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.local_scanning), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         return
@@ -80,7 +82,7 @@ fun LocalScreen(
             .background(AppInk.copy(alpha = 0.02f)),
     ) {
         Text(
-            "本地",
+            stringResource(R.string.local_title),
             style = MaterialTheme.typography.displaySmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -113,14 +115,14 @@ fun LocalScreen(
                     )
                 }
                 Text(
-                    "${displayed.size} 首本地歌曲",
+                    stringResource(R.string.local_song_count, displayed.size),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(Modifier.weight(1f))
                 Icon(
                     Icons.Default.Folder,
-                    contentDescription = "选择目录",
+                    contentDescription = stringResource(R.string.local_pick_folder),
                     tint = AppAccent,
                     modifier = Modifier.size(26.dp).clickable(onClick = onOpenFolderPicker),
                 )
@@ -150,7 +152,7 @@ private fun EmptyLocalState(onScan: () -> Unit) {
         WaveformIllustration()
         Spacer(Modifier.height(28.dp))
         Text(
-            "暂无本地歌曲",
+            stringResource(R.string.local_empty),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface,
         )
@@ -171,7 +173,7 @@ private fun EmptyLocalState(onScan: () -> Unit) {
                 modifier = Modifier.size(22.dp),
             )
             Text(
-                "开始扫描",
+                stringResource(R.string.local_start_scan),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black,
@@ -264,7 +266,7 @@ private fun LocalSongRow(song: SongEntity, onPlay: () -> Unit) {
         ) {
             Icon(
                 Icons.Default.PlayArrow,
-                contentDescription = "播放",
+                contentDescription = stringResource(R.string.common_play),
                 tint = Color.White,
                 modifier = Modifier.size(18.dp),
             )

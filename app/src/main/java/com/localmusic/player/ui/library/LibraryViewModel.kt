@@ -22,12 +22,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-enum class LibraryTab(val label: String) {
-    SONGS("歌曲"),
-    ALBUMS("专辑"),
-    ARTISTS("艺术家"),
-    FOLDERS("文件夹"),
-    PLAYLISTS("播放列表"),
+enum class LibraryTab(@androidx.annotation.StringRes val labelRes: Int) {
+    SONGS(com.localmusic.player.R.string.library_tab_songs),
+    ALBUMS(com.localmusic.player.R.string.library_tab_albums),
+    ARTISTS(com.localmusic.player.R.string.library_tab_artists),
+    FOLDERS(com.localmusic.player.R.string.library_tab_folders),
+    PLAYLISTS(com.localmusic.player.R.string.library_tab_playlists),
 }
 
 data class SongsUiState(
@@ -40,6 +40,7 @@ data class SongsUiState(
 class LibraryViewModel @Inject constructor(
     private val repository: MusicRepository,
     private val settingsStore: SettingsStore,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val appContext: android.content.Context,
 ) : ViewModel() {
 
     val songs: StateFlow<List<SongEntity>> = repository.songs
@@ -88,13 +89,9 @@ class LibraryViewModel @Inject constructor(
         LibraryGrouper.artists(sorted)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val folders = repository.songs
-        .let { flow ->
-            combine(flow, settingsStore.sortAscending) { list, asc ->
-                LibraryGrouper.folders(list).let { if (asc) it else it.reversed() }
-            }
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val folders = combine(repository.folders(), settingsStore.sortAscending) { paths, asc ->
+        paths.let { LibraryGrouper.folderGroups(it) }.let { if (asc) it else it.reversed() }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message.asStateFlow()
@@ -117,7 +114,7 @@ class LibraryViewModel @Inject constructor(
             _loading.value = true
             val count = runCatching { repository.refreshLibrary() }.getOrDefault(0)
             _loading.value = false
-            _message.value = "已更新音乐库，共 $count 首"
+            _message.value = appContext.getString(com.localmusic.player.R.string.library_refreshed, count)
         }
     }
 
@@ -154,4 +151,6 @@ class LibraryViewModel @Inject constructor(
     }
 
     fun songsInPlaylist(id: Long): Flow<List<SongEntity>> = repository.songsInPlaylist(id)
+
+    fun songsInFolder(path: String): Flow<List<SongEntity>> = repository.songsInFolder(path)
 }

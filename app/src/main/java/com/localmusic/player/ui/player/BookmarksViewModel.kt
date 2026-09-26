@@ -19,6 +19,7 @@ import javax.inject.Inject
 @HiltViewModel
 class BookmarksViewModel @Inject constructor(
     private val repository: MusicRepository,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val appContext: android.content.Context,
 ) : ViewModel() {
 
     private val songId = MutableStateFlow(-1L)
@@ -41,8 +42,8 @@ class BookmarksViewModel @Inject constructor(
         if (id <= 0) return
         val position = PlayerConnection.controller()?.currentPosition ?: 0L
         viewModelScope.launch {
-            repository.addBookmark(id, position, label.ifBlank { "书签" })
-            _message.value = "已添加书签"
+            repository.addBookmark(id, position, label.ifBlank { appContext.getString(com.localmusic.player.R.string.bookmarks_title) })
+            _message.value = appContext.getString(com.localmusic.player.R.string.bookmarks_add)
         }
     }
 

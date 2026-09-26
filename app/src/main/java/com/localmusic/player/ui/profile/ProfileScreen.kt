@@ -45,11 +45,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.localmusic.player.R
 import com.localmusic.player.data.AlbumArtSource
 import com.localmusic.player.playback.PlayerConnection
 import com.localmusic.player.ui.Artwork
@@ -110,13 +112,13 @@ fun ProfileScreen(
                 }
                 Spacer(Modifier.width(16.dp))
                 Text(
-                    "游客",
+                    stringResource(R.string.profile_guest),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f),
                 )
                 IconButton(onClick = onOpenSettings) {
-                    Icon(Icons.Default.Settings, contentDescription = "设置")
+                    Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.common_settings))
                 }
             }
 
@@ -124,14 +126,14 @@ fun ProfileScreen(
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 ProfileQuickCard(
-                    title = "我的喜欢",
+                    title = stringResource(R.string.playlist_favorites),
                     icon = Icons.Default.Favorite,
                     tint = AppAccent,
                     modifier = Modifier.weight(1f),
                     onClick = onOpenFavorites,
                 )
                 ProfileQuickCard(
-                    title = "我的常听",
+                    title = stringResource(R.string.profile_most_played),
                     icon = Icons.Default.PlaylistAdd,
                     tint = Color(0xFFFF7043),
                     modifier = Modifier.weight(1f),
@@ -142,7 +144,7 @@ fun ProfileScreen(
             Spacer(Modifier.height(16.dp))
 
             ProfileEntryRow(
-                title = "最近播放",
+                title = stringResource(R.string.profile_recently_played),
                 icon = Icons.Default.History,
                 onClick = onOpenRecentlyPlayed,
             )
@@ -151,13 +153,13 @@ fun ProfileScreen(
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "我的歌单",
+                    stringResource(R.string.playlist_mine),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f),
                 )
                 Text(
-                    "+新建歌单",
+                    stringResource(R.string.profile_new_playlist_plus),
                     style = MaterialTheme.typography.bodyMedium,
                     color = AppAccent,
                     modifier = Modifier.clickable { showCreate = true },
@@ -190,7 +192,7 @@ fun ProfileScreen(
                 }
                 Spacer(Modifier.width(16.dp))
                 Text(
-                    "新建歌单",
+                    stringResource(R.string.playlist_new_short),
                     style = MaterialTheme.typography.titleMedium,
                     color = AppAccent,
                 )
@@ -240,12 +242,12 @@ fun ProfileScreen(
         var name by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showCreate = false },
-            title = { Text("新建歌单") },
+            title = { Text(stringResource(R.string.playlist_new_short)) },
             text = {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    placeholder = { Text("歌单名称") },
+                    placeholder = { Text(stringResource(R.string.playlist_name_short)) },
                     singleLine = true,
                 )
             },
@@ -253,10 +255,10 @@ fun ProfileScreen(
                 TextButton(onClick = {
                     if (name.isNotBlank()) viewModel.createPlaylist(name.trim())
                     showCreate = false
-                }) { Text("创建") }
+                }) { Text(stringResource(R.string.common_create)) }
             },
             dismissButton = {
-                TextButton(onClick = { showCreate = false }) { Text("取消") }
+                TextButton(onClick = { showCreate = false }) { Text(stringResource(R.string.common_cancel)) }
             },
         )
     }
@@ -340,10 +342,10 @@ fun RecentlyPlayedScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
             }
             Text(
-                "最近播放",
+                stringResource(R.string.profile_recently_played),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
             )
@@ -352,7 +354,7 @@ fun RecentlyPlayedScreen(
         if (songs.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    "还没有播放记录",
+                    stringResource(R.string.profile_no_history),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -47,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.localmusic.player.R
 import com.localmusic.player.data.db.SongEntity
 import com.localmusic.player.playback.PlayerConnection
 import com.localmusic.player.ui.SongArtwork
@@ -54,8 +56,6 @@ import com.localmusic.player.ui.library.LibraryViewModel
 import com.localmusic.player.ui.theme.AppAccent
 import com.localmusic.player.ui.theme.AppPageTop
 import com.localmusic.player.ui.theme.AppSurfaceSoft
-
-private val homeFilters = listOf("全部", "经典", "怀旧", "伤感", "解压", "网络", "流行")
 
 @Composable
 fun HomeScreen(
@@ -111,7 +111,7 @@ fun HomeScreen(
                         modifier = Modifier.size(26.dp),
                     )
                     Spacer(Modifier.width(4.dp))
-                    Text("本地", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.tab_local), style = MaterialTheme.typography.titleMedium)
                 }
             }
 
@@ -138,7 +138,7 @@ fun HomeScreen(
                     )
                 }
                 Text(
-                    "播放全部",
+                    stringResource(R.string.common_play_all),
                     style = MaterialTheme.typography.titleMedium,
                     color = AppAccent,
                     fontWeight = FontWeight.SemiBold,
@@ -152,7 +152,7 @@ fun HomeScreen(
         if (displayed.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    if (songs.isEmpty()) "暂无本地歌曲，去「本地」扫描" else "没有匹配的歌曲",
+                    if (songs.isEmpty()) stringResource(R.string.home_empty) else stringResource(R.string.home_no_match),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -200,7 +200,7 @@ private fun SearchField(
         Box(modifier = Modifier.weight(1f)) {
             if (value.isEmpty()) {
                 Text(
-                    "搜索歌曲",
+                    stringResource(R.string.home_search_hint),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -218,18 +218,6 @@ private fun SearchField(
             )
         }
     }
-}
-
-@Composable
-private fun FilterLabel(text: String, selected: Boolean, onClick: () -> Unit) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-        color = if (selected) MaterialTheme.colorScheme.onSurface
-        else MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.clickable(onClick = onClick),
-    )
 }
 
 @Composable
@@ -277,7 +265,7 @@ private fun HomeSongRow(song: SongEntity, onPlay: () -> Unit) {
         ) {
             Icon(
                 Icons.Default.PlayArrow,
-                contentDescription = "播放",
+                contentDescription = stringResource(R.string.common_play),
                 tint = Color.White,
                 modifier = Modifier.size(20.dp),
             )

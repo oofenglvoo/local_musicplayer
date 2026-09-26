@@ -18,6 +18,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SongMenuViewModel @Inject constructor(
     private val repository: MusicRepository,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val appContext: android.content.Context,
 ) : ViewModel() {
 
     val playlists: StateFlow<List<PlaylistEntity>> = repository.playlists
@@ -32,19 +33,19 @@ class SongMenuViewModel @Inject constructor(
 
     fun playNext(songs: List<SongEntity>) {
         PlayerConnection.playNext(songs)
-        _message.value = "已加入下一首播放"
+        _message.value = appContext.getString(com.localmusic.player.R.string.song_menu_added_next)
     }
 
     fun addToQueue(songs: List<SongEntity>) {
         PlayerConnection.addToQueue(songs)
-        _message.value = "已加入播放队列"
+        _message.value = appContext.getString(com.localmusic.player.R.string.song_menu_added_queue)
     }
 
     fun addToPlaylist(playlistId: Long, songs: List<SongEntity>) {
         viewModelScope.launch {
             repository.addSongsToPlaylist(playlistId, songs.map { it.id })
             val name = repository.getPlaylistName(playlistId).orEmpty()
-            _message.value = "已添加 ${songs.size} 首到「$name」"
+            _message.value = appContext.getString(com.localmusic.player.R.string.song_menu_added_playlist, songs.size, name)
         }
     }
 
@@ -52,7 +53,7 @@ class SongMenuViewModel @Inject constructor(
         viewModelScope.launch {
             val id = repository.createPlaylist(name)
             repository.addSongsToPlaylist(id, songs.map { it.id })
-            _message.value = "已创建「$name」并添加 ${songs.size} 首"
+            _message.value = appContext.getString(com.localmusic.player.R.string.song_menu_created_playlist, name, songs.size)
         }
     }
 
@@ -64,7 +65,7 @@ class SongMenuViewModel @Inject constructor(
         viewModelScope.launch {
             repository.setArtworkOverride(songId, path)
             repository.refreshLibrary()
-            _message.value = "已更新封面"
+            _message.value = appContext.getString(com.localmusic.player.R.string.song_menu_artwork_updated)
         }
     }
 
@@ -84,7 +85,7 @@ class SongMenuViewModel @Inject constructor(
                 }
             }
             repository.refreshLibrary()
-            _message.value = "已删除 $ok 首歌曲"
+            _message.value = appContext.getString(com.localmusic.player.R.string.song_menu_deleted, ok)
             onDeleted()
         }
     }

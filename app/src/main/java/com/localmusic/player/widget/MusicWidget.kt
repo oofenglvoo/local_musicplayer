@@ -4,18 +4,22 @@ import android.content.Context
 import android.graphics.BitmapFactory
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
 import androidx.glance.ImageProvider
+import androidx.glance.LocalSize
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
+import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.action.ActionCallback
+import com.localmusic.player.R
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
@@ -41,77 +45,97 @@ class MusicWidgetReceiver : GlanceAppWidgetReceiver() {
 
 class MusicWidget : GlanceAppWidget() {
 
+    override val sizeMode: SizeMode = SizeMode.Responsive(
+        setOf(
+            DpSize(110.dp, 56.dp),
+            DpSize(180.dp, 110.dp),
+            DpSize(250.dp, 110.dp),
+            DpSize(320.dp, 180.dp),
+        )
+    )
+
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {
-            WidgetContent()
+            val size = LocalSize.current
+            WidgetContent(
+                compact = size.width < 160.dp,
+                defaultTitle = context.getString(R.string.app_name),
+                openAppHint = context.getString(R.string.widget_open_app),
+            )
         }
     }
 }
 
 @Composable
-private fun WidgetContent() {
+private fun WidgetContent(compact: Boolean, defaultTitle: String, openAppHint: String) {
     val nowPlaying = PlayerConnection.nowPlaying.value
     val isPlaying = PlayerConnection.isPlaying.value
     val shuffle = PlayerConnection.shuffle.value
     val repeat = PlayerConnection.repeat.value
 
-    val title = if (nowPlaying.isEmpty) "本地播放器" else nowPlaying.title
-    val subtitle = if (nowPlaying.isEmpty) "点击打开应用" else nowPlaying.artist
+    val title = if (nowPlaying.isEmpty) defaultTitle else nowPlaying.title
+    val subtitle = if (nowPlaying.isEmpty) openAppHint else nowPlaying.artist
 
     Column(
         modifier = GlanceModifier
             .fillMaxWidth()
             .background(Color(0xFF1B1B2F))
-            .padding(12.dp)
+            .padding(if (compact) 8.dp else 12.dp)
             .clickable(actionStartActivity<MainActivity>()),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            val artworkPath = nowPlaying.artworkPath
-            val bitmap = artworkPath?.let { path ->
-                File(path).takeIf { it.exists() }?.let { BitmapFactory.decodeFile(it.absolutePath) }
-            }
-            if (bitmap != null) {
-                Image(
-                    provider = ImageProvider(bitmap),
-                    contentDescription = null,
-                    modifier = GlanceModifier.size(48.dp),
-                )
-                Spacer(GlanceModifier.width(10.dp))
+            if (!compact) {
+                val artworkPath = nowPlaying.artworkPath
+                val bitmap = artworkPath?.let { path ->
+                    File(path).takeIf { it.exists() }?.let { BitmapFactory.decodeFile(it.absolutePath) }
+                }
+                if (bitmap != null) {
+                    Image(
+                        provider = ImageProvider(bitmap),
+                        contentDescription = null,
+                        modifier = GlanceModifier.size(48.dp),
+                    )
+                    Spacer(GlanceModifier.width(10.dp))
+                }
             }
             Column(modifier = GlanceModifier.defaultWeight()) {
                 Text(
                     text = title,
                     style = TextStyle(
                         color = ColorProvider(Color.White),
-                        fontSize = 16.sp,
+                        fontSize = if (compact) 13.sp else 16.sp,
                         fontWeight = FontWeight.Bold,
                     ),
                     maxLines = 1,
                 )
-                Spacer(GlanceModifier.size(2.dp))
-                Text(
-                    text = subtitle,
-                    style = TextStyle(color = ColorProvider(Color(0xFFB0B0C0)), fontSize = 12.sp),
-                    maxLines = 1,
-                )
+                if (!compact) {
+                    Spacer(GlanceModifier.size(2.dp))
+                    Text(
+                        text = subtitle,
+                        style = TextStyle(color = ColorProvider(Color(0xFFB0B0C0)), fontSize = 12.sp),
+                        maxLines = 1,
+                    )
+                }
             }
         }
-        Spacer(GlanceModifier.size(8.dp))
+        Spacer(GlanceModifier.size(if (compact) 4.dp else 8.dp))
         Row(
             modifier = GlanceModifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = "⤨",
-                modifier = GlanceModifier
-                    .padding(4.dp)
-                    .clickable(actionRunCallback<ShuffleAction>()),
-                style = TextStyle(
-                    color = ColorProvider(if (shuffle) Color(0xFFD0BCFF) else Color(0xFF808090)),
-                    fontSize = 16.sp,
-                ),
-            )
-            Spacer(GlanceModifier.width(12.dp))
+            if (!compact) {
+                Text(
+                    text = "⤨",
+                    modifier = GlanceModifier
+                        .padding(4.dp)
+                        .clickable(actionRunCallback<ShuffleAction>()),
+                    style = TextStyle(
+                        color = ColorProvider(if (shuffle) Color(0xFFD0BCFF) else Color(0xFF808090)),
+                        fontSize = 16.sp,
+                    ),
+                )
+                Spacer(GlanceModifier.width(12.dp))
+            }
             Text(
                 text = "◀◀",
                 modifier = GlanceModifier
@@ -119,7 +143,7 @@ private fun WidgetContent() {
                     .clickable(actionRunCallback<PrevAction>()),
                 style = TextStyle(color = ColorProvider(Color.White), fontSize = 18.sp),
             )
-            Spacer(GlanceModifier.width(12.dp))
+            Spacer(GlanceModifier.width(if (compact) 8.dp else 12.dp))
             Text(
                 text = if (isPlaying) "❚❚" else "▶",
                 modifier = GlanceModifier
@@ -127,7 +151,7 @@ private fun WidgetContent() {
                     .clickable(actionRunCallback<ToggleAction>()),
                 style = TextStyle(color = ColorProvider(Color.White), fontSize = 18.sp),
             )
-            Spacer(GlanceModifier.width(12.dp))
+            Spacer(GlanceModifier.width(if (compact) 8.dp else 12.dp))
             Text(
                 text = "▶▶",
                 modifier = GlanceModifier
@@ -135,24 +159,26 @@ private fun WidgetContent() {
                     .clickable(actionRunCallback<NextAction>()),
                 style = TextStyle(color = ColorProvider(Color.White), fontSize = 18.sp),
             )
-            Spacer(GlanceModifier.width(12.dp))
-            Text(
-                text = when (repeat) {
-                    com.localmusic.player.playback.RepeatMode.ONE -> "↻1"
-                    com.localmusic.player.playback.RepeatMode.ALL -> "↻"
-                    else -> "↻"
-                },
-                modifier = GlanceModifier
-                    .padding(4.dp)
-                    .clickable(actionRunCallback<RepeatAction>()),
-                style = TextStyle(
-                    color = ColorProvider(
-                        if (repeat != com.localmusic.player.playback.RepeatMode.OFF) Color(0xFFD0BCFF)
-                        else Color(0xFF808090)
+            if (!compact) {
+                Spacer(GlanceModifier.width(12.dp))
+                Text(
+                    text = when (repeat) {
+                        com.localmusic.player.playback.RepeatMode.ONE -> "↻1"
+                        com.localmusic.player.playback.RepeatMode.ALL -> "↻"
+                        else -> "↻"
+                    },
+                    modifier = GlanceModifier
+                        .padding(4.dp)
+                        .clickable(actionRunCallback<RepeatAction>()),
+                    style = TextStyle(
+                        color = ColorProvider(
+                            if (repeat != com.localmusic.player.playback.RepeatMode.OFF) Color(0xFFD0BCFF)
+                            else Color(0xFF808090)
+                        ),
+                        fontSize = 16.sp,
                     ),
-                    fontSize = 16.sp,
-                ),
-            )
+                )
+            }
         }
     }
 }

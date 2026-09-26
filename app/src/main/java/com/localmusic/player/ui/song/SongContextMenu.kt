@@ -46,10 +46,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.localmusic.player.R
 import com.localmusic.player.data.db.SongEntity
 import com.localmusic.player.ui.SongArtwork
 import com.localmusic.player.util.SongActions
@@ -104,47 +106,47 @@ fun SongContextMenuSheet(
             }
             HorizontalDivider()
 
-            MenuRow(Icons.Default.SkipNext, "下一首播放") {
+            MenuRow(Icons.Default.SkipNext, stringResource(R.string.song_menu_play_next)) {
                 viewModel.playNext(listOf(song))
                 onDismiss()
             }
-            MenuRow(Icons.Default.QueueMusic, "加入播放队列") {
+            MenuRow(Icons.Default.QueueMusic, stringResource(R.string.song_menu_add_queue)) {
                 viewModel.addToQueue(listOf(song))
                 onDismiss()
             }
-            MenuRow(Icons.AutoMirrored.Filled.PlaylistAdd, "添加到播放列表") {
+            MenuRow(Icons.AutoMirrored.Filled.PlaylistAdd, stringResource(R.string.song_menu_add_playlist)) {
                 showAddToPlaylist = true
             }
             MenuRow(
                 if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                if (isFavorite) "取消收藏" else "收藏",
+                stringResource(if (isFavorite) R.string.song_menu_unfavorite else R.string.song_menu_favorite),
             ) {
                 viewModel.toggleFavorite(song.id)
                 onDismiss()
             }
-            MenuRow(Icons.Default.Share, "分享") {
+            MenuRow(Icons.Default.Share, stringResource(R.string.song_menu_share)) {
                 SongActions.shareSong(context, song)
                 onDismiss()
             }
-            MenuRow(Icons.Default.EditNote, "编辑歌词") {
+            MenuRow(Icons.Default.EditNote, stringResource(R.string.song_menu_edit_lyrics)) {
                 onEditLyrics(song)
                 onDismiss()
             }
-            MenuRow(Icons.Default.Image, "更换封面") {
+            MenuRow(Icons.Default.Image, stringResource(R.string.song_menu_change_artwork)) {
                 onEditArtwork(song)
                 onDismiss()
             }
-            MenuRow(Icons.Default.Notifications, "设为铃声") {
+            MenuRow(Icons.Default.Notifications, stringResource(R.string.song_menu_set_ringtone)) {
                 SongActions.setAsRingtone(context, song)
                 onDismiss()
             }
-            MenuRow(Icons.Default.Info, "歌曲详情") {
+            MenuRow(Icons.Default.Info, stringResource(R.string.song_detail_title)) {
                 onShowDetail(song)
                 onDismiss()
             }
             MenuRow(
                 Icons.Default.Delete,
-                "删除文件",
+                stringResource(R.string.library_delete_files_title),
                 tint = MaterialTheme.colorScheme.error,
             ) {
                 showDeleteConfirm = true
@@ -155,8 +157,8 @@ fun SongContextMenuSheet(
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            title = { Text("删除文件") },
-            text = { Text("确定要永久删除「${song.title}」吗？此操作不可恢复。") },
+            title = { Text(stringResource(R.string.library_delete_files_title)) },
+            text = { Text(stringResource(R.string.song_menu_delete_confirm, song.title)) },
             confirmButton = {
                 TextButton(onClick = {
                     showDeleteConfirm = false
@@ -165,11 +167,11 @@ fun SongContextMenuSheet(
                         onDismiss()
                     }
                 }) {
-                    Text("删除", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.common_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = false }) { Text("取消") }
+                TextButton(onClick = { showDeleteConfirm = false }) { Text(stringResource(R.string.common_cancel)) }
             },
         )
     }
@@ -211,12 +213,12 @@ fun AddToPlaylistDialog(
     if (showCreate) {
         AlertDialog(
             onDismissRequest = { showCreate = false },
-            title = { Text("新建播放列表") },
+            title = { Text(stringResource(R.string.library_new_playlist)) },
             text = {
                 OutlinedTextField(
                     value = newName,
                     onValueChange = { newName = it },
-                    placeholder = { Text("播放列表名称") },
+                    placeholder = { Text(stringResource(R.string.library_playlist_name)) },
                     singleLine = true,
                 )
             },
@@ -227,10 +229,10 @@ fun AddToPlaylistDialog(
                     }
                     showCreate = false
                     onDone()
-                }) { Text("创建") }
+                }) { Text(stringResource(R.string.common_create)) }
             },
             dismissButton = {
-                TextButton(onClick = { showCreate = false }) { Text("取消") }
+                TextButton(onClick = { showCreate = false }) { Text(stringResource(R.string.common_cancel)) }
             },
         )
         return
@@ -238,11 +240,11 @@ fun AddToPlaylistDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("添加到播放列表") },
+        title = { Text(stringResource(R.string.song_menu_add_playlist)) },
         text = {
             Column(modifier = Modifier.heightIn(max = 400.dp)) {
                 if (playlists.isEmpty()) {
-                    Text("暂无播放列表", style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.library_no_playlists), style = MaterialTheme.typography.bodyMedium)
                 } else {
                     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                         playlists.forEach { playlist ->
@@ -262,10 +264,10 @@ fun AddToPlaylistDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { showCreate = true }) { Text("新建") }
+            TextButton(onClick = { showCreate = true }) { Text(stringResource(R.string.common_new)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("取消") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
         },
     )
 }
@@ -307,17 +309,17 @@ fun SongDetailSheet(
             )
             HorizontalDivider()
 
-            DetailRow("专辑", song.album)
-            DetailRow("时长", song.duration.toDurationString())
-            DetailRow("格式", song.mimeType.ifBlank { "未知" })
-            DetailRow("比特率", if (info.bitrateKbps > 0) "${info.bitrateKbps} kbps" else "未知")
-            DetailRow("采样率", if (info.sampleRateHz > 0) "${info.sampleRateHz} Hz" else "未知")
-            DetailRow("文件大小", formatSize(info.sizeBytes))
-            DetailRow("年份", if (song.year > 0) song.year.toString() else "未知")
-            DetailRow("音轨", if (song.trackNumber > 0) song.trackNumber.toString() else "未知")
-            DetailRow("唱片", if (song.discNumber > 0) song.discNumber.toString() else "未知")
-            DetailRow("播放次数", "${song.playCount} 次")
-            DetailRow("文件路径", song.path)
+            DetailRow(stringResource(R.string.detail_field_album), song.album)
+            DetailRow(stringResource(R.string.detail_field_duration), song.duration.toDurationString())
+            DetailRow(stringResource(R.string.detail_field_format), song.mimeType.ifBlank { stringResource(R.string.common_unknown) })
+            DetailRow(stringResource(R.string.detail_field_bitrate), if (info.bitrateKbps > 0) "${info.bitrateKbps} kbps" else stringResource(R.string.common_unknown))
+            DetailRow(stringResource(R.string.detail_field_sample_rate), if (info.sampleRateHz > 0) "${info.sampleRateHz} Hz" else stringResource(R.string.common_unknown))
+            DetailRow(stringResource(R.string.detail_field_size), formatSize(info.sizeBytes))
+            DetailRow(stringResource(R.string.detail_field_year), if (song.year > 0) song.year.toString() else stringResource(R.string.common_unknown))
+            DetailRow(stringResource(R.string.detail_field_track), if (song.trackNumber > 0) song.trackNumber.toString() else stringResource(R.string.common_unknown))
+            DetailRow(stringResource(R.string.detail_field_disc), if (song.discNumber > 0) song.discNumber.toString() else stringResource(R.string.common_unknown))
+            DetailRow(stringResource(R.string.detail_field_play_count), stringResource(R.string.detail_play_count_value, song.playCount))
+            DetailRow(stringResource(R.string.detail_field_path), song.path)
         }
     }
 }
@@ -345,7 +347,7 @@ private fun DetailRow(label: String, value: String) {
 }
 
 private fun formatSize(bytes: Long): String {
-    if (bytes <= 0) return "未知"
+    if (bytes <= 0) return "-"
     val kb = bytes / 1024.0
     val mb = kb / 1024.0
     return when {

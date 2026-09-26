@@ -25,6 +25,7 @@ data class LyricsEditState(
 @HiltViewModel
 class LyricsEditViewModel @Inject constructor(
     private val repository: MusicRepository,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val appContext: android.content.Context,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LyricsEditState())
@@ -36,7 +37,9 @@ class LyricsEditViewModel @Inject constructor(
         viewModelScope.launch {
             _state.value = LyricsEditState(loading = true)
             val song = repository.getSong(songId) ?: run {
-                _state.value = LyricsEditState(message = "找不到歌曲")
+                _state.value = LyricsEditState(
+                    message = appContext.getString(com.localmusic.player.R.string.lyrics_song_missing)
+                )
                 return@launch
             }
             val lrcPath = withContext(Dispatchers.IO) { findLrcPath(song.path) }
@@ -63,7 +66,7 @@ class LyricsEditViewModel @Inject constructor(
         offsets[_state.value.songPath] = newOffset
         _state.value = _state.value.copy(
             offsetMs = newOffset,
-            message = "歌词偏移 ${newOffset} ms",
+            message = appContext.getString(com.localmusic.player.R.string.lyrics_offset_message, newOffset),
         )
     }
 
@@ -86,7 +89,11 @@ class LyricsEditViewModel @Inject constructor(
             }
             _state.value = _state.value.copy(
                 lrcPath = result ?: state.lrcPath,
-                message = if (result != null) "歌词已保存" else "保存失败",
+                message = if (result != null) {
+                    appContext.getString(com.localmusic.player.R.string.lyrics_saved)
+                } else {
+                    appContext.getString(com.localmusic.player.R.string.lyrics_save_failed)
+                },
             )
             if (result != null) onSaved()
         }

@@ -44,180 +44,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.localmusic.player.R
 import com.localmusic.player.data.db.SongEntity
-import com.localmusic.player.ui.Artwork
-import com.localmusic.player.ui.SongRow
-import com.localmusic.player.data.AlbumArtSource
 import com.localmusic.player.playback.PlayerConnection
-import com.localmusic.player.ui.library.LibraryViewModel
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun PlaylistListScreen(
-    onOpenPlaylist: (Long) -> Unit,
-    viewModel: LibraryViewModel = hiltViewModel(),
-) {
-    val playlists by viewModel.playlists.collectAsStateWithLifecycle()
-    var showCreateDialog by remember { mutableStateOf(false) }
-    var renameTarget by remember { mutableStateOf<Pair<Long, String>?>(null) }
-    var deleteTarget by remember { mutableStateOf<Pair<Long, String>?>(null) }
-    var menuOpenId by remember { mutableStateOf<Long?>(null) }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("播放列表") },
-                actions = {
-                    IconButton(onClick = { showCreateDialog = true }) {
-                        Icon(Icons.Default.Add, contentDescription = "新建播放列表")
-                    }
-                },
-            )
-        },
-    ) { padding ->
-        if (playlists.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text("还没有播放列表，点击右上角新建", style = MaterialTheme.typography.bodyMedium)
-            }
-        } else {
-            LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
-                items(playlists, key = { it.id }) { playlist ->
-                    ListItem(
-                        modifier = Modifier.clickable { onOpenPlaylist(playlist.id) },
-                        headlineContent = { Text(playlist.name) },
-                        supportingContent = {
-                            Text("创建于 ${formatDate(playlist.createdAt)}")
-                        },
-                        leadingContent = {
-                            Icon(Icons.Default.PlaylistPlay, contentDescription = null)
-                        },
-                        trailingContent = {
-                            Box {
-                                IconButton(onClick = { menuOpenId = playlist.id }) {
-                                    Icon(Icons.Default.MoreVert, contentDescription = "更多")
-                                }
-                                DropdownMenu(
-                                    expanded = menuOpenId == playlist.id,
-                                    onDismissRequest = { menuOpenId = null },
-                                ) {
-                                    DropdownMenuItem(
-                                        text = { Text("重命名") },
-                                        leadingIcon = {
-                                            Icon(Icons.Default.Edit, contentDescription = null)
-                                        },
-                                        onClick = {
-                                            renameTarget = playlist.id to playlist.name
-                                            menuOpenId = null
-                                        },
-                                    )
-                                    DropdownMenuItem(
-                                        text = {
-                                            Text("删除", color = MaterialTheme.colorScheme.error)
-                                        },
-                                        leadingIcon = {
-                                            Icon(
-                                                Icons.Default.Delete,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.error,
-                                            )
-                                        },
-                                        onClick = {
-                                            deleteTarget = playlist.id to playlist.name
-                                            menuOpenId = null
-                                        },
-                                    )
-                                }
-                            }
-                        },
-                    )
-                }
-            }
-        }
-    }
-
-    if (showCreateDialog) {
-        NameDialog(
-            title = "新建播放列表",
-            initial = "",
-            confirmLabel = "创建",
-            onDismiss = { showCreateDialog = false },
-            onConfirm = {
-                if (it.isNotBlank()) viewModel.createPlaylist(it)
-                showCreateDialog = false
-            },
-        )
-    }
-
-    renameTarget?.let { (id, current) ->
-        NameDialog(
-            title = "重命名播放列表",
-            initial = current,
-            confirmLabel = "保存",
-            onDismiss = { renameTarget = null },
-            onConfirm = {
-                if (it.isNotBlank()) viewModel.renamePlaylist(id, it)
-                renameTarget = null
-            },
-        )
-    }
-
-    deleteTarget?.let { (id, name) ->
-        AlertDialog(
-            onDismissRequest = { deleteTarget = null },
-            title = { Text("删除播放列表") },
-            text = { Text("确定要删除「$name」吗？歌曲文件不会被删除。") },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.deletePlaylist(id)
-                    deleteTarget = null
-                }) {
-                    Text("删除", color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { deleteTarget = null }) { Text("取消") }
-            },
-        )
-    }
-}
-
-@Composable
-private fun NameDialog(
-    title: String,
-    initial: String,
-    confirmLabel: String,
-    onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit,
-) {
-    var name by remember { mutableStateOf(initial) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                placeholder = { Text("播放列表名称") },
-                singleLine = true,
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = { onConfirm(name.trim()) }) { Text(confirmLabel) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("取消") }
-        },
-    )
-}
+import com.localmusic.player.ui.SongRow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -238,26 +75,26 @@ fun PlaylistDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(playlistName.ifBlank { "播放列表" }) },
+                title = { Text(playlistName.ifBlank { stringResource(R.string.library_tab_playlists) }) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 actions = {
                     IconButton(onClick = { viewModel.playAll() }) {
-                        Icon(Icons.Default.PlaylistPlay, contentDescription = "播放全部")
+                        Icon(Icons.Default.PlaylistPlay, contentDescription = stringResource(R.string.common_play_all))
                     }
                     IconButton(onClick = { viewModel.shufflePlay() }) {
-                        Icon(Icons.Default.Shuffle, contentDescription = "随机播放")
+                        Icon(Icons.Default.Shuffle, contentDescription = stringResource(R.string.common_shuffle_all))
                     }
                     IconButton(onClick = { selectedIds = emptySet(); showAddSongs = true }) {
-                        Icon(Icons.Default.Add, contentDescription = "添加歌曲")
+                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.playlist_add_songs))
                     }
                     IconButton(onClick = { reorderMode = !reorderMode }) {
                         Icon(
                             Icons.Default.DragHandle,
-                            contentDescription = "调整顺序",
+                            contentDescription = null,
                             tint = if (reorderMode) MaterialTheme.colorScheme.primary
                             else MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -271,7 +108,7 @@ fun PlaylistDetailScreen(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentAlignment = Alignment.Center,
             ) {
-                Text("播放列表为空", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.playlist_empty), style = MaterialTheme.typography.bodyMedium)
             }
         } else {
             if (reorderMode) {
@@ -299,16 +136,16 @@ fun PlaylistDetailScreen(
     removeTarget?.let { song ->
         AlertDialog(
             onDismissRequest = { removeTarget = null },
-            title = { Text("从播放列表移除") },
-            text = { Text("将「${song.title}」从该播放列表移除？（不会删除文件）") },
+            title = { Text(stringResource(R.string.playlist_remove_from)) },
+            text = { Text(stringResource(R.string.detail_remove_confirm, song.title)) },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.removeFromPlaylist(song.id)
                     removeTarget = null
-                }) { Text("移除") }
+                }) { Text(stringResource(R.string.common_remove)) }
             },
             dismissButton = {
-                TextButton(onClick = { removeTarget = null }) { Text("取消") }
+                TextButton(onClick = { removeTarget = null }) { Text(stringResource(R.string.common_cancel)) }
             },
         )
     }
@@ -316,7 +153,7 @@ fun PlaylistDetailScreen(
     if (showAddSongs) {
         AlertDialog(
             onDismissRequest = { showAddSongs = false },
-            title = { Text("添加歌曲") },
+            title = { Text(stringResource(R.string.playlist_add_songs)) },
             text = {
                 LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
                     items(allSongs, key = { it.id }) { song ->
@@ -341,9 +178,9 @@ fun PlaylistDetailScreen(
                 TextButton(onClick = {
                     viewModel.addSongs(selectedIds.toList())
                     showAddSongs = false
-                }) { Text("添加（${selectedIds.size}）") }
+                }) { Text(stringResource(R.string.detail_add_count, selectedIds.size)) }
             },
-            dismissButton = { TextButton(onClick = { showAddSongs = false }) { Text("取消") } },
+            dismissButton = { TextButton(onClick = { showAddSongs = false }) { Text(stringResource(R.string.common_cancel)) } },
         )
     }
 }
@@ -410,16 +247,16 @@ fun FavoritesScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("我的喜欢 · ${songs.size}") },
+                title = { Text("${stringResource(R.string.playlist_favorites)} · ${songs.size}") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 actions = {
                     if (songs.isNotEmpty()) {
                         IconButton(onClick = { PlayerConnection.playSongsShuffled(songs) }) {
-                            Icon(Icons.Default.Shuffle, contentDescription = "随机播放")
+                            Icon(Icons.Default.Shuffle, contentDescription = stringResource(R.string.common_shuffle_all))
                         }
                     }
                 },
@@ -431,7 +268,7 @@ fun FavoritesScreen(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentAlignment = Alignment.Center,
             ) {
-                Text("还没有收藏歌曲", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.playlist_empty), style = MaterialTheme.typography.bodyMedium)
             }
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
@@ -446,10 +283,4 @@ fun FavoritesScreen(
             }
         }
     }
-}
-
-private fun formatDate(ms: Long): String {
-    if (ms <= 0) return "未知"
-    val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
-    return sdf.format(java.util.Date(ms))
 }

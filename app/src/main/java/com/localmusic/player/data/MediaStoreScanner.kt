@@ -4,6 +4,7 @@ import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.os.Build
 import android.provider.MediaStore
+import com.localmusic.player.R
 import com.localmusic.player.data.db.SongEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
@@ -79,9 +80,15 @@ object MediaStoreScanner {
                 val rawTrack = cursor.getInt(trackCol)
                 songs += SongEntity(
                     id = cursor.getLong(idCol),
-                    title = cursor.getString(titleCol) ?: "未知歌曲",
-                    artist = if (artist.isNullOrBlank() || artist == "<unknown>") "未知艺术家" else artist,
-                    album = cursor.getString(albumCol) ?: "未知专辑",
+                    title = cursor.getString(titleCol)
+                        ?: context.getString(R.string.meta_unknown_song),
+                    artist = if (artist.isNullOrBlank() || artist == "<unknown>") {
+                        context.getString(R.string.meta_unknown_artist)
+                    } else {
+                        artist
+                    },
+                    album = cursor.getString(albumCol)
+                        ?: context.getString(R.string.meta_unknown_album),
                     albumId = cursor.getLong(albumIdCol),
                     artistId = 0L,
                     duration = duration,

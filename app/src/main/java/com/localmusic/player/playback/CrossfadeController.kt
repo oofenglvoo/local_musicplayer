@@ -1,11 +1,11 @@
 package com.localmusic.player.playback
 
-import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -33,15 +33,26 @@ class CrossfadeController {
 
     fun setCrossfadeMs(ms: Int) {
         crossfadeMs = ms.coerceIn(0, 30_000)
+        if (crossfadeMs == 0) resetToUserVolume()
     }
 
     fun effectiveCrossfadeMs(): Int = crossfadeMs
 
     fun tick() {
         val p = player ?: return
-        if (crossfadeMs <= 0) return
-        if (!p.isPlaying) return
-        if (p.mediaItemCount <= 1) return
+        if (crossfadeMs <= 0) {
+            resetToUserVolume()
+            return
+        }
+        if (!p.isPlaying) {
+            // Don't keep the track ducked once playback stops.
+            resetToUserVolume()
+            return
+        }
+        if (p.mediaItemCount <= 1) {
+            resetToUserVolume()
+            return
+        }
 
         val duration = p.duration
         val position = p.currentPosition
@@ -52,14 +63,14 @@ class CrossfadeController {
 
         val targetVolume = when {
             remaining <= fadeWindow -> {
-                (remaining.toFloat() / fadeWindow).coerceIn(0.05f, 1f) * userVolume
+                (remaining.toFloat() / fadeWindow).coerceIn(0f, 1f) * userVolume
             }
             position <= fadeWindow -> {
-                (position.toFloat() / fadeWindow).coerceIn(0.05f, 1f) * userVolume
+                (position.toFloat() / fadeWindow).coerceIn(0f, 1f) * userVolume
             }
             else -> userVolume
         }
-        if (kotlin.math.abs(p.volume - targetVolume) > 0.02f) {
+        if (kotlin.math.abs(p.volume - targetVolume) > 0.01f) {
             p.volume = targetVolume
         }
     }
@@ -73,6 +84,16 @@ class CrossfadeController {
 
     fun resetToUserVolume() {
         fadeJob?.cancel()
-        player?.volume = userVolume
+        fadeJob = null
+        if (player?.volume != userVolume) {
+            player?.volume = userVolume
+        }
+    }
+
+    fun release() {
+        fadeJob?.cancel()
+        fadeJob = null
+        scope.cancel()
+        player = null
     }
 }

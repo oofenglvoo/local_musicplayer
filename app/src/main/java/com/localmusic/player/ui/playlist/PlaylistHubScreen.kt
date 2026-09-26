@@ -44,11 +44,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.localmusic.player.R
 import com.localmusic.player.data.AlbumArtSource
 import com.localmusic.player.data.db.SongEntity
 import com.localmusic.player.playback.PlayerConnection
@@ -92,7 +94,7 @@ fun PlaylistHubScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                "歌单",
+                stringResource(R.string.tab_playlists),
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.weight(1f),
@@ -107,7 +109,7 @@ fun PlaylistHubScreen(
                     tint = AppAccent,
                     modifier = Modifier.size(20.dp),
                 )
-                Text("新建歌单", style = MaterialTheme.typography.bodyMedium, color = AppAccent)
+                Text(stringResource(R.string.playlist_new_short), style = MaterialTheme.typography.bodyMedium, color = AppAccent)
             }
         }
 
@@ -120,7 +122,7 @@ fun PlaylistHubScreen(
         ) {
             item {
                 PlaylistCardItem(
-                    PlaylistCard("我的喜欢", "收藏的歌曲都在这里", favoriteSongs.firstOrNull(), AppAccent, onOpenFavorites),
+                    PlaylistCard(stringResource(R.string.playlist_favorites), stringResource(R.string.playlist_favorites_subtitle), favoriteSongs.firstOrNull(), AppAccent, onOpenFavorites),
                     badge = Icons.Default.Favorite,
                 )
             }
@@ -130,7 +132,7 @@ fun PlaylistHubScreen(
                 PlaylistCardItem(
                     PlaylistCard(
                         title = playlist.name,
-                        subtitle = "我的歌单",
+                        subtitle = stringResource(R.string.playlist_mine),
                         song = playlistSongs.firstOrNull(),
                         accent = AppAccent,
                     ) { onOpenPlaylist(playlist.id) },
@@ -146,12 +148,12 @@ fun PlaylistHubScreen(
         var name by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showCreate = false },
-            title = { Text("新建歌单") },
+            title = { Text(stringResource(R.string.playlist_new_short)) },
             text = {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    placeholder = { Text("歌单名称") },
+                    placeholder = { Text(stringResource(R.string.playlist_name_short)) },
                     singleLine = true,
                 )
             },
@@ -159,10 +161,10 @@ fun PlaylistHubScreen(
                 DialogActionButton(onClick = {
                     if (name.isNotBlank()) viewModel.createPlaylist(name.trim())
                     showCreate = false
-                }) { Text("创建") }
+                }) { Text(stringResource(R.string.common_create)) }
             },
             dismissButton = {
-                DialogActionButton(onClick = { showCreate = false }) { Text("取消") }
+                DialogActionButton(onClick = { showCreate = false }) { Text(stringResource(R.string.common_cancel)) }
             },
         )
     }
@@ -171,29 +173,29 @@ fun PlaylistHubScreen(
         var name by remember(renameTarget) { mutableStateOf(current) }
         AlertDialog(
             onDismissRequest = { renameTarget = null },
-            title = { Text("歌单操作") },
+            title = { Text(stringResource(R.string.playlist_actions)) },
             text = { OutlinedTextField(value = name, onValueChange = { name = it }, singleLine = true) },
             confirmButton = {
                 DialogActionButton(onClick = {
                     if (name.isNotBlank()) viewModel.renamePlaylist(id, name.trim())
                     renameTarget = null
-                }) { Text("重命名") }
+                }) { Text(stringResource(R.string.playlist_rename)) }
             },
             dismissButton = {
                 DialogActionButton(onClick = {
                     deleteTarget = id to current
                     renameTarget = null
-                }) { Text("删除") }
+                }) { Text(stringResource(R.string.common_delete)) }
             },
         )
     }
     deleteTarget?.let { (id, name) ->
         AlertDialog(
             onDismissRequest = { deleteTarget = null },
-            title = { Text("删除歌单") },
-            text = { Text("确定删除「$name」吗？歌曲文件不会被删除。") },
-            confirmButton = { DialogActionButton(onClick = { viewModel.deletePlaylist(id); deleteTarget = null }) { Text("删除") } },
-            dismissButton = { DialogActionButton(onClick = { deleteTarget = null }) { Text("取消") } },
+            title = { Text(stringResource(R.string.playlist_delete_short)) },
+            text = { Text(stringResource(R.string.playlist_delete_confirm_short, name)) },
+            confirmButton = { DialogActionButton(onClick = { viewModel.deletePlaylist(id); deleteTarget = null }) { Text(stringResource(R.string.common_delete)) } },
+            dismissButton = { DialogActionButton(onClick = { deleteTarget = null }) { Text(stringResource(R.string.common_cancel)) } },
         )
     }
 }
@@ -254,7 +256,7 @@ private fun PlaylistCardItem(
             ) {
                 Icon(
                     Icons.Default.PlayArrow,
-                    contentDescription = "播放",
+                    contentDescription = stringResource(R.string.common_play),
                     tint = Color.Black,
                     modifier = Modifier.size(24.dp),
                 )
@@ -262,7 +264,7 @@ private fun PlaylistCardItem(
             if (onMore != null) {
                 Icon(
                     Icons.Default.MoreVert,
-                    contentDescription = "歌单操作",
+                    contentDescription = stringResource(R.string.playlist_actions),
                     tint = Color.White,
                     modifier = Modifier.align(Alignment.TopEnd).padding(10.dp).clickable(onClick = onMore),
                 )
