@@ -1,10 +1,7 @@
 package com.localmusic.player.ui.player
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode as AnimationRepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -13,7 +10,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -26,7 +22,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -50,8 +45,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -61,14 +54,14 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -105,11 +98,6 @@ fun NowPlayingScreen(
     val queue by PlayerConnection.queue.collectAsStateWithLifecycle()
     val currentIndex by PlayerConnection.currentIndex.collectAsStateWithLifecycle()
 
-    val controller = PlayerConnection.controller()
-    var positionMs by remember { mutableLongStateOf(0L) }
-    var durationMs by remember { mutableLongStateOf(0L) }
-    var isDragging by remember { mutableStateOf(false) }
-    var dragValue by remember { mutableFloatStateOf(0f) }
     var volume by remember { mutableFloatStateOf(PlayerConnection.currentVolume()) }
     var page by remember { mutableStateOf(0) }
     var volumePopup by remember { mutableStateOf(false) }
@@ -118,18 +106,6 @@ fun NowPlayingScreen(
     val lyricsState by lyricsViewModel.state.collectAsStateWithLifecycle()
     val favoriteViewModel: com.localmusic.player.ui.playlist.FavoritesViewModel = hiltViewModel()
     val favoriteIds by favoriteViewModel.favoriteIds.collectAsStateWithLifecycle()
-
-    LaunchedEffect(controller) {
-        while (true) {
-            controller?.let {
-                if (!isDragging) {
-                    positionMs = it.currentPosition
-                    durationMs = it.duration.coerceAtLeast(0L)
-                }
-            }
-            delay(500)
-        }
-    }
 
     val artworkSource = AlbumArtSource(nowPlaying.artworkPath, nowPlaying.albumId)
     val artworkModel = remember(artworkSource) { artworkSource.toModel() }
@@ -260,20 +236,7 @@ fun NowPlayingScreen(
             Spacer(Modifier.height(12.dp))
             CreditsBlock(artist = nowPlaying.artist)
 
-            SeekBar(
-                positionMs = if (isDragging) dragValue.toLong() else positionMs,
-                durationMs = durationMs,
-                onStartDrag = { isDragging = true },
-                onDrag = { dragValue = it.toFloat() },
-                onEndDrag = { PlayerConnection.seekTo(dragValue.toLong()); isDragging = false },
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                TimeLabel(if (isDragging) dragValue.toLong() else positionMs)
-                TimeLabel(durationMs)
-            }
+            ProgressBar(onSeek = { PlayerConnection.seekTo(it) })
 
             Row(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
@@ -368,14 +331,47 @@ private fun CreditsBlock(artist: String) {
 }
 
 @Composable
-private fun SeekBar(
-    positionMs: Long,
-    durationMs: Long,
-    onStartDrag: () -> Unit,
-    onDrag: (Long) -> Unit,
-    onEndDrag: () -> Unit,
+private fun rememberPlaybackProgress(
+    isDragging: Boolean,
+    pendingSeekMs: Long?,
+): Pair<Long, Long> {
+    val controller = PlayerConnection.controller()
+    var positionMs by remember { mutableLongStateOf(0L) }
+    var durationMs by remember { mutableLongStateOf(0L) }
+    LaunchedEffect(controller, isDragging, pendingSeekMs) {
+        if (isDragging) return@LaunchedEffect
+        val c = controller ?: return@LaunchedEffect
+        while (true) {
+            val current = c.currentPosition
+            durationMs = c.duration.coerceAtLeast(0L)
+            if (pendingSeekMs != null && kotlin.math.abs(current - pendingSeekMs) > 800L) {
+                positionMs = pendingSeekMs
+            } else {
+                positionMs = current
+            }
+            delay(500)
+        }
+    }
+    return positionMs to durationMs
+}
+
+@Composable
+private fun ProgressBar(
+    onSeek: (Long) -> Unit,
 ) {
+    val controller = PlayerConnection.controller()
+    var isDragging by remember { mutableStateOf(false) }
+    var dragValue by remember { mutableLongStateOf(0L) }
+    var pendingSeekMs by remember { mutableStateOf<Long?>(null) }
+    val (positionMs, durationMs) = rememberPlaybackProgress(isDragging, pendingSeekMs)
     val duration = durationMs.coerceAtLeast(1L)
+    val displayMs = if (isDragging) dragValue else pendingSeekMs ?: positionMs
+
+    LaunchedEffect(pendingSeekMs, positionMs) {
+        val pending = pendingSeekMs ?: return@LaunchedEffect
+        if (kotlin.math.abs(positionMs - pending) <= 800L) pendingSeekMs = null
+    }
+
     Canvas(
         modifier = Modifier
             .fillMaxWidth()
@@ -384,30 +380,45 @@ private fun SeekBar(
                 fun valueAt(x: Float): Long =
                     (x.coerceIn(0f, size.width.toFloat()) / size.width * duration).toLong()
                 detectTapGestures { offset ->
-                    onStartDrag()
-                    onDrag(valueAt(offset.x))
-                    onEndDrag()
+                    val target = valueAt(offset.x)
+                    pendingSeekMs = target
+                    onSeek(target)
                 }
             }
             .pointerInput(duration) {
                 detectDragGestures(
-                    onDragStart = { onStartDrag() },
-                    onDragEnd = { onEndDrag() },
-                    onDragCancel = { onEndDrag() },
+                    onDragStart = {
+                        dragValue = (controller?.currentPosition ?: 0L).coerceIn(0L, duration)
+                        isDragging = true
+                    },
+                    onDragEnd = {
+                        if (isDragging) {
+                            pendingSeekMs = dragValue
+                            onSeek(dragValue)
+                        }
+                        isDragging = false
+                    },
+                    onDragCancel = { isDragging = false },
                 ) { change, _ ->
                     change.consume()
-                    onDrag(
-                        (change.position.x.coerceIn(0f, size.width.toFloat()) / size.width * duration).toLong(),
-                    )
+                    dragValue = (change.position.x.coerceIn(0f, size.width.toFloat()) / size.width * duration).toLong()
                 }
             },
     ) {
         val y = size.height / 2f
-        val progress = (positionMs.coerceIn(0L, duration).toFloat() / duration).coerceIn(0f, 1f)
+        val progress = (displayMs.coerceIn(0L, duration).toFloat() / duration).coerceIn(0f, 1f)
         val x = size.width * progress
         drawLine(Color(0xFFDCE4DF), Offset(0f, y), Offset(size.width, y), strokeWidth = 3f)
         drawLine(AppAccent, Offset(0f, y), Offset(x, y), strokeWidth = 3f)
         drawCircle(AppAccent, radius = 5f, center = Offset(x, y))
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        TimeLabel(displayMs)
+        TimeLabel(duration)
     }
 }
 
@@ -475,17 +486,23 @@ private fun VinylDisc(
     fallbackAlbumId: Long,
     onClick: () -> Unit,
 ) {
-    val transition = rememberInfiniteTransition(label = "artwork")
-    val angle by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 20_000, easing = LinearEasing),
-            repeatMode = AnimationRepeatMode.Restart,
-        ),
-        label = "angle",
-    )
+    val rotation = remember { Animatable(0f) }
     val shouldRotate = isPlaying && active
+    val latestShouldRotate by rememberUpdatedState(shouldRotate)
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            if (latestShouldRotate) {
+                rotation.animateTo(
+                    targetValue = rotation.value + 360f,
+                    animationSpec = tween(durationMillis = 20_000, easing = LinearEasing),
+                )
+                rotation.snapTo(rotation.value % 360f)
+            } else {
+                delay(100)
+            }
+        }
+    }
 
     BoxWithConstraints(
         modifier = Modifier.fillMaxSize(),
@@ -506,7 +523,7 @@ private fun VinylDisc(
                 modifier = Modifier
                     .size(discSize * 0.92f)
                     .clip(CircleShape)
-                    .rotate(if (shouldRotate) angle else 0f),
+                    .graphicsLayer { rotationZ = rotation.value },
                 contentAlignment = Alignment.Center,
             ) {
                 if (pageModel != null) {

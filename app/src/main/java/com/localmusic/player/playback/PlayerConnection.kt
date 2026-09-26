@@ -10,9 +10,15 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
 import com.localmusic.player.data.db.SongEntity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 data class NowPlaying(
     val songId: Long = -1,
@@ -47,6 +53,9 @@ enum class RepeatMode(val value: Int, val label: String) {
 object PlayerConnection {
 
     private var controller: MediaController? = null
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private var pauseCommitJob: Job? = null
 
     val effects = AudioEffectsController()
     val crossfade = CrossfadeController()
@@ -116,7 +125,7 @@ object PlayerConnection {
 
     private fun syncState() {
         val c = controller ?: return
-        _isPlaying.value = c.isPlaying
+        updateIsPlaying(c.isPlaying)
         _shuffle.value = c.shuffleModeEnabled
         _repeat.value = RepeatMode.from(c.repeatMode)
         _currentIndex.value = c.currentMediaItemIndex
@@ -133,6 +142,22 @@ object PlayerConnection {
                 albumId = item.mediaMetadata.extras?.getLong("albumId") ?: 0L,
                 artworkPath = item.mediaMetadata.extras?.getString("artworkPath"),
             )
+        }
+    }
+
+    private fun updateIsPlaying(playing: Boolean) {
+        if (playing) {
+            pauseCommitJob?.cancel()
+            pauseCommitJob = null
+            if (!_isPlaying.value) _isPlaying.value = true
+        } else {
+            if (_isPlaying.value) {
+                pauseCommitJob?.cancel()
+                pauseCommitJob = scope.launch {
+                    delay(300)
+                    _isPlaying.value = false
+                }
+            }
         }
     }
 
