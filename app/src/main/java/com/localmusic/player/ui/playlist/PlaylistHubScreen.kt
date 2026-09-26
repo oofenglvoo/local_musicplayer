@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -155,13 +156,13 @@ fun PlaylistHubScreen(
                 )
             },
             confirmButton = {
-                TextButton(onClick = {
+                DialogActionButton(onClick = {
                     if (name.isNotBlank()) viewModel.createPlaylist(name.trim())
                     showCreate = false
                 }) { Text("创建") }
             },
             dismissButton = {
-                TextButton(onClick = { showCreate = false }) { Text("取消") }
+                DialogActionButton(onClick = { showCreate = false }) { Text("取消") }
             },
         )
     }
@@ -173,13 +174,13 @@ fun PlaylistHubScreen(
             title = { Text("歌单操作") },
             text = { OutlinedTextField(value = name, onValueChange = { name = it }, singleLine = true) },
             confirmButton = {
-                TextButton(onClick = {
+                DialogActionButton(onClick = {
                     if (name.isNotBlank()) viewModel.renamePlaylist(id, name.trim())
                     renameTarget = null
                 }) { Text("重命名") }
             },
             dismissButton = {
-                TextButton(onClick = {
+                DialogActionButton(onClick = {
                     deleteTarget = id to current
                     renameTarget = null
                 }) { Text("删除") }
@@ -191,10 +192,24 @@ fun PlaylistHubScreen(
             onDismissRequest = { deleteTarget = null },
             title = { Text("删除歌单") },
             text = { Text("确定删除「$name」吗？歌曲文件不会被删除。") },
-            confirmButton = { TextButton(onClick = { viewModel.deletePlaylist(id); deleteTarget = null }) { Text("删除") } },
-            dismissButton = { TextButton(onClick = { deleteTarget = null }) { Text("取消") } },
+            confirmButton = { DialogActionButton(onClick = { viewModel.deletePlaylist(id); deleteTarget = null }) { Text("删除") } },
+            dismissButton = { DialogActionButton(onClick = { deleteTarget = null }) { Text("取消") } },
         )
     }
+}
+
+@Composable
+private fun DialogActionButton(
+    onClick: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    TextButton(
+        onClick = onClick,
+        modifier = Modifier
+            .heightIn(min = 52.dp)
+            .padding(horizontal = 12.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+    ) { content() }
 }
 
 @Composable
