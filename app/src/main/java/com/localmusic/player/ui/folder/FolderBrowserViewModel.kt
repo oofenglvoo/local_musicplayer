@@ -74,6 +74,19 @@ class FolderBrowserViewModel @Inject constructor(
         }
     }
 
+    fun excludeCurrentFolder() {
+        val dir = _state.value.currentDir ?: return
+        _scanning.value = true
+        viewModelScope.launch {
+            val count = runCatching {
+                repository.addExcludedFolder(dir.absolutePath)
+                repository.refreshLibrary()
+            }.getOrDefault(0)
+            _scanning.value = false
+            _message.value = "已排除 ${dir.name}，音乐库共 $count 首"
+        }
+    }
+
     fun removeFolder(path: String) {
         _scanning.value = true
         viewModelScope.launch {

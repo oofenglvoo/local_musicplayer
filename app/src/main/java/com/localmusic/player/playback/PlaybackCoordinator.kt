@@ -22,7 +22,12 @@ class PlaybackCoordinator(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var saveJob: kotlinx.coroutines.Job? = null
 
+    @Volatile
+    private var started = false
+
     fun start() {
+        if (started) return
+        started = true
         PlayerConnection.setPlayRecordedCallback { songId ->
             scope.launch { runCatching { repository.recordPlay(songId) } }
         }
@@ -81,9 +86,9 @@ class PlaybackCoordinator(
     private suspend fun restoreQueue() {
         val (ids, state) = repository.loadQueueState()
         if (state == null || ids.isEmpty()) return
-        val songs = ids.mapNotNull { repository.getSong(it) }
+        val songs = repository.getSongs(ids)
         if (songs.isEmpty()) return
-        val index = ids.indexOf(state.songId).coerceAtLeast(0)
+        val index = songs.indexOfFirst { it.id == state.songId }.coerceAtLeast(0)
         // Controller access must happen on the main thread.
         withContext(Dispatchers.Main) {
             PlayerConnection.restore(

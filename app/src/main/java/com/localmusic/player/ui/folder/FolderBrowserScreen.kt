@@ -45,6 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 @Composable
 fun FolderBrowserScreen(
     onBack: () -> Unit,
+    excludeMode: Boolean = false,
     viewModel: FolderBrowserViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -135,13 +136,16 @@ fun FolderBrowserScreen(
                         supportingContent = { Text("${state.audioCount} 个音频文件") },
                     )
                     Button(
-                        onClick = { viewModel.scanCurrentFolder() },
+                        onClick = {
+                            if (excludeMode) viewModel.excludeCurrentFolder()
+                            else viewModel.scanCurrentFolder()
+                        },
                         enabled = !scanning,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 4.dp),
                     ) {
-                        Text("扫描当前目录")
+                        Text(if (excludeMode) "排除当前目录" else "扫描当前目录")
                     }
                 }
 

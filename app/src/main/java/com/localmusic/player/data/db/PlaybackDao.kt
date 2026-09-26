@@ -48,6 +48,12 @@ interface PlayHistoryDao {
 
     @Query("DELETE FROM play_history")
     suspend fun clear()
+
+    @Transaction
+    suspend fun record(history: PlayHistoryEntity) {
+        insert(history)
+        trim()
+    }
 }
 
 @Dao

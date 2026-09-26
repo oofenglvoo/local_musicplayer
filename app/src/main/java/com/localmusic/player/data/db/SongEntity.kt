@@ -1,9 +1,20 @@
 package com.localmusic.player.data.db
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "songs")
+@Entity(
+    tableName = "songs",
+    indices = [
+        Index(value = ["path"], unique = true),
+        Index(value = ["title"]),
+        Index(value = ["artist"]),
+        Index(value = ["album"]),
+        Index(value = ["dateAdded"]),
+        Index(value = ["playCount"]),
+    ],
+)
 data class SongEntity(
     @PrimaryKey val id: Long,
     val title: String,

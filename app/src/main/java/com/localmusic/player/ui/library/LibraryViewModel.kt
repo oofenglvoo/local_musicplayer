@@ -99,6 +99,9 @@ class LibraryViewModel @Inject constructor(
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message.asStateFlow()
 
+    private val _loading = MutableStateFlow(false)
+    val loading: StateFlow<Boolean> = _loading.asStateFlow()
+
     fun albumByKey(key: String): Flow<AlbumGroup?> =
         repository.songs.map { list ->
             LibraryGrouper.albums(list).firstOrNull { it.key == key }
@@ -111,7 +114,9 @@ class LibraryViewModel @Inject constructor(
 
     fun refresh() {
         viewModelScope.launch {
-            val count = repository.refreshLibrary()
+            _loading.value = true
+            val count = runCatching { repository.refreshLibrary() }.getOrDefault(0)
+            _loading.value = false
             _message.value = "已更新音乐库，共 $count 首"
         }
     }

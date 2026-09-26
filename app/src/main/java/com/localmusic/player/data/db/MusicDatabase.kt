@@ -14,8 +14,8 @@ import androidx.room.RoomDatabase
         PlayHistoryEntity::class,
         BookmarkEntity::class,
     ],
-    version = 3,
-    exportSchema = false,
+    version = 4,
+    exportSchema = true,
 )
 abstract class MusicDatabase : RoomDatabase() {
     abstract fun songDao(): SongDao

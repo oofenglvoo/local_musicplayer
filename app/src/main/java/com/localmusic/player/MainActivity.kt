@@ -34,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -94,8 +95,14 @@ class MainActivity : ComponentActivity() {
         setContent {
             val themeMode by settingsStore.themeMode
                 .collectAsStateWithLifecycle(com.localmusic.player.data.ThemeMode.SYSTEM)
+            val dynamicColor by settingsStore.dynamicColor.collectAsStateWithLifecycle(true)
+            val seedColor by settingsStore.seedColor.collectAsStateWithLifecycle(null)
 
-            LocalMusicTheme(themeMode = themeMode) {
+            LocalMusicTheme(
+                themeMode = themeMode,
+                dynamicColor = dynamicColor,
+                seedColor = seedColor,
+            ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
@@ -132,9 +139,9 @@ private fun AppRoot() {
         BottomTab("playlists", "歌单", Icons.Filled.LibraryMusic, Icons.Outlined.LibraryMusic),
         BottomTab("profile", "我的", Icons.Filled.Person, Icons.Outlined.Person),
     )
-    var selectedTab by remember { mutableIntStateOf(0) }
-    var nowPlayingOpen by remember { mutableStateOf(false) }
-    var queueOpen by remember { mutableStateOf(false) }
+    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+    var nowPlayingOpen by rememberSaveable { mutableStateOf(false) }
+    var queueOpen by rememberSaveable { mutableStateOf(false) }
 
     val navController = rememberNavController()
     val currentEntry by navController.currentBackStackEntryAsState()
@@ -207,6 +214,10 @@ private fun AppRoot() {
                                     nowPlayingOpen = false
                                     navController.navigate("settings/audio")
                                 },
+                                onOpenSleepTimer = {
+                                    nowPlayingOpen = false
+                                    navController.navigate("settings/audio")
+                                },
                             )
                         }
                     } else {
@@ -252,7 +263,7 @@ private fun AppRoot() {
                                         ProfileScreen(
                                             onOpenSettings = { navController.navigate("settings") },
                                             onOpenFavorites = { navController.navigate("favorites") },
-                                            onOpenMostPlayed = { navController.navigate("favorites") },
+                                            onOpenMostPlayed = { navController.navigate("autolist/MOST_PLAYED") },
                                             onOpenRecentlyPlayed = { navController.navigate("recentlyPlayed") },
                                             onOpenPlaylist = { id -> navController.navigate("playlist/$id") },
                                         )
@@ -263,8 +274,12 @@ private fun AppRoot() {
                                     composable("favorites") {
                                         FavoritesScreen(onBack = { navController.popBackStack() })
                                     }
-                                    composable("folderPicker") {
-                                        FolderBrowserScreen(onBack = { navController.popBackStack() })
+                                    composable("folderPicker?exclude={exclude}") { entry ->
+                                        val exclude = entry.arguments?.getString("exclude") == "true"
+                                        FolderBrowserScreen(
+                                            onBack = { navController.popBackStack() },
+                                            excludeMode = exclude,
+                                        )
                                     }
                                     composable("settings") {
                                         SettingsScreen(
@@ -282,7 +297,10 @@ private fun AppRoot() {
                                         ThemeSettingsScreen(onBack = { navController.popBackStack() })
                                     }
                                     composable("settings/library") {
-                                        LibrarySettingsScreen(onBack = { navController.popBackStack() })
+                                        LibrarySettingsScreen(
+                                            onBack = { navController.popBackStack() },
+                                            onAddExcludedFolder = { navController.navigate("folderPicker?exclude=true") },
+                                        )
                                     }
                                     composable("settings/about") {
                                         AboutScreen(onBack = { navController.popBackStack() })

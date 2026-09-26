@@ -114,7 +114,9 @@ fun AlbumDetailScreen(
         },
     ) { padding ->
         if (current == null) {
-            Column(modifier = Modifier.fillMaxSize().padding(padding)) {}
+            Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+                EmptyHint("未找到该专辑")
+            }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),
@@ -181,7 +183,9 @@ fun ArtistDetailScreen(
         },
     ) { padding ->
         if (current == null) {
-            Column(modifier = Modifier.fillMaxSize().padding(padding)) {}
+            Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+                EmptyHint("未找到该艺术家")
+            }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),
@@ -234,7 +238,9 @@ fun FolderDetailScreen(
         },
     ) { padding ->
         if (folder == null) {
-            Column(modifier = Modifier.fillMaxSize().padding(padding)) {}
+            Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+                EmptyHint("未找到该文件夹")
+            }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),

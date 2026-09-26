@@ -117,7 +117,26 @@ object PlayerConnection {
         }, MoreExecutors.directExecutor())
     }
 
+    /**
+     * Ensures a controller is connected and runs [block] on the main thread.
+     * Used by entry points that may start from a cold process (e.g. the widget),
+     * where [connect] has not been called yet.
+     */
+    fun runOnMain(context: Context, block: (MediaController?) -> Unit) {
+        scope.launch {
+            if (controller == null) connect(context)
+            var waited = 0
+            while (controller == null && waited < 3000) {
+                delay(50)
+                waited += 50
+            }
+            block(controller)
+        }
+    }
+
     fun release() {
+        pauseCommitJob?.cancel()
+        pauseCommitJob = null
         controller?.release()
         controller = null
         _isPlaying.value = false
@@ -364,6 +383,11 @@ object PlayerConnection {
                             artworkPath?.let { putString("artworkPath", it) }
                         }
                     )
+                    .apply {
+                        artworkPath?.let { p ->
+                            runCatching { setArtworkUri(android.net.Uri.fromFile(java.io.File(p))) }
+                        }
+                    }
                     .build()
             )
             .build()

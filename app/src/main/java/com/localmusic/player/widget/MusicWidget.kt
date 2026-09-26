@@ -167,7 +167,7 @@ class ToggleAction : ActionCallback {
         glanceId: GlanceId,
         parameters: ActionParameters,
     ) {
-        PlayerConnection.togglePlayPause()
+        PlayerConnection.runOnMain(context) { it?.let { c -> if (c.isPlaying) c.pause() else c.play() } }
         refreshWidget(context, glanceId)
     }
 }
@@ -178,7 +178,7 @@ class NextAction : ActionCallback {
         glanceId: GlanceId,
         parameters: ActionParameters,
     ) {
-        PlayerConnection.next()
+        PlayerConnection.runOnMain(context) { it?.seekToNextMediaItem() }
         refreshWidget(context, glanceId)
     }
 }
@@ -189,7 +189,7 @@ class PrevAction : ActionCallback {
         glanceId: GlanceId,
         parameters: ActionParameters,
     ) {
-        PlayerConnection.previous()
+        PlayerConnection.runOnMain(context) { it?.seekToPreviousMediaItem() }
         refreshWidget(context, glanceId)
     }
 }
@@ -200,7 +200,7 @@ class ShuffleAction : ActionCallback {
         glanceId: GlanceId,
         parameters: ActionParameters,
     ) {
-        PlayerConnection.toggleShuffle()
+        PlayerConnection.runOnMain(context) { it?.let { c -> c.shuffleModeEnabled = !c.shuffleModeEnabled } }
         refreshWidget(context, glanceId)
     }
 }
@@ -211,7 +211,15 @@ class RepeatAction : ActionCallback {
         glanceId: GlanceId,
         parameters: ActionParameters,
     ) {
-        PlayerConnection.cycleRepeat()
+        PlayerConnection.runOnMain(context) { c ->
+            c?.let {
+                it.repeatMode = when (it.repeatMode) {
+                    androidx.media3.common.Player.REPEAT_MODE_OFF -> androidx.media3.common.Player.REPEAT_MODE_ALL
+                    androidx.media3.common.Player.REPEAT_MODE_ALL -> androidx.media3.common.Player.REPEAT_MODE_ONE
+                    else -> androidx.media3.common.Player.REPEAT_MODE_OFF
+                }
+            }
+        }
         refreshWidget(context, glanceId)
     }
 }

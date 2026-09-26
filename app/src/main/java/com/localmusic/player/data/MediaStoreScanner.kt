@@ -6,6 +6,8 @@ import android.os.Build
 import android.provider.MediaStore
 import com.localmusic.player.data.db.SongEntity
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
 
@@ -65,6 +67,7 @@ object MediaStoreScanner {
             val yearCol = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)
 
             while (cursor.moveToNext()) {
+                currentCoroutineContext().ensureActive()
                 val path = cursor.getString(dataCol) ?: ""
                 if (excluded.isNotEmpty() && excluded.any { path == it || path.startsWith("$it/") }) {
                     continue

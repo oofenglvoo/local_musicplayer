@@ -4,7 +4,6 @@ import android.content.Context
 import com.localmusic.player.data.db.BookmarkDao
 import com.localmusic.player.data.db.BookmarkEntity
 import com.localmusic.player.data.db.FavoriteDao
-import com.localmusic.player.data.db.FavoriteEntity
 import com.localmusic.player.data.db.PlayHistoryDao
 import com.localmusic.player.data.db.PlayHistoryEntity
 import com.localmusic.player.data.db.PlaylistDao
@@ -19,6 +18,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -86,20 +87,32 @@ class MusicRepository @Inject constructor(
 
     suspend fun getSong(id: Long): SongEntity? = songDao.getById(id)
 
-    suspend fun refreshLibrary(): Int {
+    suspend fun getSongs(ids: List<Long>): List<SongEntity> {
+        if (ids.isEmpty()) return emptyList()
+        val byId = songDao.getByIds(ids.distinct()).associateBy { it.id }
+        return ids.mapNotNull { byId[it] }
+    }
+
+    private val refreshMutex = Mutex()
+
+    suspend fun refreshLibrary(): Int = refreshMutex.withLock {
         val excluded = settingsStore.excludedFolders.first()
         val minDuration = settingsStore.minDurationSec.first()
         val fromMediaStore = MediaStoreScanner.scan(context, excluded, minDuration)
         val fromFolders = scanAllFolders(excluded, minDuration)
         val merged = mergeSongs(fromMediaStore, fromFolders)
         val overrides = settingsStore.artworkOverrides.first()
-        val withArtwork = if (overrides.isEmpty()) merged else merged.map { song ->
+        val stats = songDao.playStats().associateBy { it.path }
+        val withArtwork = merged.map { song ->
             val override = overrides[song.id]
-            if (override.isNullOrBlank()) song else song.copy(artworkPath = override)
+            val stat = stats[song.path]
+            var updated = song
+            if (!override.isNullOrBlank()) updated = updated.copy(artworkPath = override)
+            if (stat != null) updated = updated.copy(playCount = stat.playCount, lastPlayedAt = stat.lastPlayedAt)
+            updated
         }
-        songDao.clear()
-        songDao.insertAll(withArtwork)
-        return withArtwork.size
+        songDao.replaceAll(withArtwork)
+        withArtwork.size
     }
 
     suspend fun rebuildWithFolder(path: String): Int {
@@ -170,18 +183,13 @@ class MusicRepository @Inject constructor(
         playlistDao.reorder(playlistId, orderedSongIds)
 
     suspend fun toggleFavorite(songId: Long) {
-        if (favoriteDao.favoriteIds().contains(songId)) {
-            favoriteDao.remove(songId)
-        } else {
-            favoriteDao.add(FavoriteEntity(songId, System.currentTimeMillis()))
-        }
+        favoriteDao.toggle(songId, System.currentTimeMillis())
     }
 
     suspend fun recordPlay(songId: Long) {
         val now = System.currentTimeMillis()
         songDao.incrementPlayCount(songId, now)
-        playHistoryDao.insert(PlayHistoryEntity(songId = songId, playedAt = now))
-        playHistoryDao.trim()
+        playHistoryDao.record(PlayHistoryEntity(songId = songId, playedAt = now))
     }
 
     suspend fun saveQueueState(

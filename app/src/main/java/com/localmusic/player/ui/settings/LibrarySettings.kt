@@ -38,6 +38,7 @@ private val MIN_DURATION_OPTIONS = listOf(0 to "不过滤", 10 to "10 秒", 30 t
 @Composable
 fun LibrarySettingsScreen(
     onBack: () -> Unit,
+    onAddExcludedFolder: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val minDuration by viewModel.minDurationSec.collectAsStateWithLifecycle()
@@ -107,6 +108,20 @@ fun LibrarySettingsScreen(
             HorizontalDivider()
 
             Text("排除目录", style = MaterialTheme.typography.titleMedium)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            ) {
+                Text(
+                    "扫描时会跳过这些目录",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                )
+                androidx.compose.material3.TextButton(onClick = onAddExcludedFolder) {
+                    Text("添加排除目录")
+                }
+            }
             if (excluded.isEmpty()) {
                 Text(
                     "没有排除任何目录",

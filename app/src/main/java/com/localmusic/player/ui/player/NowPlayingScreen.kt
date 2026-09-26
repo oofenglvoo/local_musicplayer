@@ -28,7 +28,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
+import androidx.compose.material.icons.filled.Bookmarks
+import androidx.compose.material.icons.filled.Bedtime
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Pause
@@ -39,6 +42,7 @@ import androidx.compose.material.icons.filled.RepeatOne
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -90,6 +94,7 @@ fun NowPlayingScreen(
     onOpenQueue: () -> Unit = {},
     onOpenBookmarks: (Long) -> Unit = {},
     onOpenEqualizer: () -> Unit = {},
+    onOpenSleepTimer: () -> Unit = {},
 ) {
     val nowPlaying by PlayerConnection.nowPlaying.collectAsStateWithLifecycle()
     val isPlaying by PlayerConnection.isPlaying.collectAsStateWithLifecycle()
@@ -101,24 +106,52 @@ fun NowPlayingScreen(
     var volume by remember { mutableFloatStateOf(PlayerConnection.currentVolume()) }
     var page by remember { mutableStateOf(0) }
     var volumePopup by remember { mutableStateOf(false) }
+    var showSpeedDialog by remember { mutableStateOf(false) }
+
+    val sleepActive by com.localmusic.player.playback.SleepTimerController.active.collectAsStateWithLifecycle()
+    val sleepRemaining by com.localmusic.player.playback.SleepTimerController.remainingMs.collectAsStateWithLifecycle()
+    val sleepRemainingText = remember(sleepRemaining) {
+        val totalSec = sleepRemaining / 1000
+        "%d:%02d".format(totalSec / 60, totalSec % 60)
+    }
 
     val lyricsViewModel: LyricsInlineViewModel = hiltViewModel()
     val lyricsState by lyricsViewModel.state.collectAsStateWithLifecycle()
     val favoriteViewModel: com.localmusic.player.ui.playlist.FavoritesViewModel = hiltViewModel()
     val favoriteIds by favoriteViewModel.favoriteIds.collectAsStateWithLifecycle()
+    val settingsViewModel: com.localmusic.player.ui.settings.SettingsViewModel = hiltViewModel()
 
     val artworkSource = AlbumArtSource(nowPlaying.artworkPath, nowPlaying.albumId)
     val artworkModel = remember(artworkSource) { artworkSource.toModel() }
 
     val artworkPagerState = rememberPagerState(initialPage = 0) { 2 }
 
-    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .padding(horizontal = 20.dp),
-        ) {
+    val backgroundMode by settingsViewModel.backgroundMode.collectAsStateWithLifecycle()
+    val backgroundImage by settingsViewModel.backgroundImage.collectAsStateWithLifecycle()
+    val backgroundColor by settingsViewModel.backgroundColor.collectAsStateWithLifecycle()
+    val backgroundSecondaryColor by settingsViewModel.backgroundSecondaryColor.collectAsStateWithLifecycle()
+    val backgroundBlur by settingsViewModel.backgroundBlur.collectAsStateWithLifecycle()
+    val backgroundDim by settingsViewModel.backgroundDim.collectAsStateWithLifecycle()
+    val speed by settingsViewModel.settingsStore.playbackSpeed
+        .collectAsStateWithLifecycle(1.0f)
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        com.localmusic.player.ui.theme.DynamicBackground(
+            mode = backgroundMode,
+            image = backgroundImage,
+            fallbackArtwork = artworkModel,
+            primary = Color(backgroundColor),
+            secondary = Color(backgroundSecondaryColor),
+            blur = backgroundBlur,
+            dim = backgroundDim,
+        )
+        Surface(color = Color.Transparent, modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .padding(horizontal = 20.dp),
+            ) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -225,8 +258,8 @@ fun NowPlayingScreen(
                     }
                     IconButton(onClick = { onOpenBookmarks(nowPlaying.songId) }) {
                         Icon(
-                            Icons.AutoMirrored.Filled.PlaylistAdd,
-                            contentDescription = "添加到歌单",
+                            Icons.Default.Bookmarks,
+                            contentDescription = "书签",
                             tint = MaterialTheme.colorScheme.onSurface,
                         )
                     }
@@ -294,8 +327,110 @@ fun NowPlayingScreen(
                 }
             }
 
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                QuickAction(
+                    icon = Icons.Default.Speed,
+                    label = if (speed == 1.0f) "倍速" else "${"%.2f".format(speed).trimEnd('0').trimEnd('.')}x",
+                    active = speed != 1.0f,
+                    onClick = { showSpeedDialog = true },
+                )
+                QuickAction(
+                    icon = Icons.Default.Bedtime,
+                    label = if (sleepActive) sleepRemainingText else "定时",
+                    active = sleepActive,
+                    onClick = { onOpenSleepTimer() },
+                )
+                QuickAction(
+                    icon = Icons.Default.Equalizer,
+                    label = "音效",
+                    active = false,
+                    onClick = { onOpenEqualizer() },
+                )
+            }
+
             Spacer(Modifier.height(12.dp))
+            }
         }
+        if (showSpeedDialog) {
+            SpeedDialog(
+                speed = speed,
+                onPick = { PlayerConnection.setSpeed(it); showSpeedDialog = false },
+                onDismiss = { showSpeedDialog = false },
+            )
+        }
+    }
+}
+
+@Composable
+private fun SpeedDialog(
+    speed: Float,
+    onPick: (Float) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val options = listOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f)
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("播放速度") },
+        text = {
+            Column {
+                options.forEach { option ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { onPick(option) }
+                            .padding(horizontal = 8.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            "${option}x",
+                            modifier = Modifier.weight(1f),
+                            color = if (kotlin.math.abs(speed - option) < 0.001f) AppAccent
+                            else MaterialTheme.colorScheme.onSurface,
+                        )
+                        if (kotlin.math.abs(speed - option) < 0.001f) {
+                            Icon(Icons.Default.Check, contentDescription = null, tint = AppAccent)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            androidx.compose.material3.TextButton(onClick = onDismiss) { Text("关闭") }
+        },
+    )
+}
+
+@Composable
+private fun QuickAction(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    active: Boolean,
+    onClick: () -> Unit,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = if (active) AppAccent else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(22.dp),
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (active) AppAccent else MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

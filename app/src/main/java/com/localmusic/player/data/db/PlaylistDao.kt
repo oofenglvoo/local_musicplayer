@@ -72,6 +72,9 @@ interface FavoriteDao {
     @Query("SELECT EXISTS(SELECT 1 FROM favorites WHERE songId = :songId)")
     fun observeIsFavorite(songId: Long): Flow<Boolean>
 
+    @Query("SELECT EXISTS(SELECT 1 FROM favorites WHERE songId = :songId)")
+    suspend fun isFavorite(songId: Long): Boolean
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun add(favorite: FavoriteEntity)
 
@@ -80,4 +83,9 @@ interface FavoriteDao {
 
     @Query("SELECT songId FROM favorites")
     suspend fun favoriteIds(): List<Long>
+
+    @Transaction
+    suspend fun toggle(songId: Long, time: Long) {
+        if (isFavorite(songId)) remove(songId) else add(FavoriteEntity(songId, time))
+    }
 }

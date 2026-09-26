@@ -1,13 +1,18 @@
 package com.localmusic.player.ui.theme
 
+import android.os.Build
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import com.localmusic.player.data.ThemeMode
@@ -74,24 +79,36 @@ private val BlackScheme = darkColorScheme(
 )
 
 /**
- * The redesigned UI keeps a fixed light-mint/emerald palette and ignores dynamic
- * colour and custom seed colours so every screen matches the target design.
+ * Applies the selected theme. [ThemeMode.SYSTEM] follows the system dark mode.
+ * When [dynamicColor] is enabled on Android 12+ the wallpaper palette is used,
+ * otherwise [seedColor] (when present) derives a tonal scheme.
  */
 @Composable
 fun LocalMusicTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
-    @Suppress("UNUSED_PARAMETER") dynamicColor: Boolean = false,
-    @Suppress("UNUSED_PARAMETER") seedColor: Int? = null,
+    dynamicColor: Boolean = false,
+    seedColor: Int? = null,
     content: @Composable () -> Unit,
 ) {
     val darkTheme = when (themeMode) {
-        ThemeMode.SYSTEM -> false
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
         ThemeMode.LIGHT -> false
         ThemeMode.DARK, ThemeMode.BLACK -> true
     }
 
+    val context = LocalContext.current
     val colorScheme: ColorScheme = when {
         themeMode == ThemeMode.BLACK -> BlackScheme
+        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        }
+        seedColor != null -> {
+            val scheme = if (darkTheme) DarkScheme else LightScheme
+            scheme.copy(
+                primary = Color(seedColor),
+                secondary = Color(seedColor),
+            )
+        }
         darkTheme -> DarkScheme
         else -> LightScheme
     }

@@ -5,8 +5,11 @@ import android.media.MediaMetadataRetriever
 import android.os.Build
 import com.localmusic.player.data.db.SongEntity
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
+import kotlin.math.abs
 
 object FolderScanner {
 
@@ -16,6 +19,13 @@ object FolderScanner {
 
     fun isAudioFile(file: File): Boolean =
         file.isFile && file.extension.lowercase() in AUDIO_EXTENSIONS
+
+    /**
+     * Deterministic synthetic id for a file that is not present in MediaStore.
+     * Derived from the absolute path so it is stable across rescans.
+     */
+    fun syntheticIdFor(path: String): Long =
+        -(abs(path.hashCode().toLong()) + 1_000_000L)
 
     suspend fun scanDirectory(
         context: Context,
@@ -29,12 +39,12 @@ object FolderScanner {
 
         val excluded = excludedFolders.map { it.trimEnd('/') }.toSet()
 
-        var syntheticId = -1_000_000L
-
         while (stack.isNotEmpty()) {
+            currentCoroutineContext().ensureActive()
             val dir = stack.removeLast()
             val children = dir.listFiles() ?: continue
             for (child in children) {
+                currentCoroutineContext().ensureActive()
                 when {
                     child.isDirectory -> {
                         if (!child.name.startsWith(".") && !isExcluded(child, excluded)) {
@@ -42,7 +52,7 @@ object FolderScanner {
                         }
                     }
                     isAudioFile(child) -> {
-                        val song = readMetadata(context, child, syntheticId--)
+                        val song = readMetadata(context, child)
                         if (song.duration >= minDurationSec * 1000L) {
                             result += song
                         }
@@ -61,7 +71,6 @@ object FolderScanner {
     private suspend fun readMetadata(
         context: Context,
         file: File,
-        syntheticId: Long,
     ): SongEntity {
         var title = file.nameWithoutExtension
         var artist = "未知艺术家"
@@ -70,10 +79,12 @@ object FolderScanner {
         var track = 0
         var year = 0
         var disc = 0
+        var artworkPath: String? = null
 
+        val path = file.absolutePath
         val retriever = MediaMetadataRetriever()
         try {
-            retriever.setDataSource(file.absolutePath)
+            retriever.setDataSource(path)
             retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
                 ?.takeIf { it.isNotBlank() }?.let { title = it }
             retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
@@ -88,25 +99,27 @@ object FolderScanner {
                 ?.substringBefore('-')?.trim()?.toIntOrNull()?.let { year = it }
             retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DISC_NUMBER)
                 ?.substringBefore('/')?.trim()?.toIntOrNull()?.let { disc = it }
+
+            val embedded = runCatching { retriever.embeddedPicture }.getOrNull()
+            if (embedded != null && embedded.isNotEmpty()) {
+                artworkPath = runCatching {
+                    ArtworkCache.savePicture(context, path, embedded)
+                }.getOrNull()
+            }
         } catch (_: Exception) {
         } finally {
             runCatching { retriever.release() }
         }
 
-        val cacheKey = ArtworkCache.cacheKeyFor(file.absolutePath)
-        val artworkPath = runCatching {
-            ArtworkCache.extractAndSave(context, file.absolutePath, cacheKey)
-        }.getOrNull()
-
         return SongEntity(
-            id = syntheticId,
+            id = syntheticIdFor(path),
             title = title,
             artist = artist,
             album = album,
             albumId = 0L,
             artistId = 0L,
             duration = duration,
-            path = file.absolutePath,
+            path = path,
             trackNumber = track,
             size = file.length(),
             dateAdded = file.lastModified() / 1000L,

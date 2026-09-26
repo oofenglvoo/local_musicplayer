@@ -60,7 +60,19 @@ fun LocalScreen(
     onOpenFolder: (FolderGroup) -> Unit,
 ) {
     val songs by viewModel.sortedSongs.collectAsStateWithLifecycle()
+    val loading by viewModel.loading.collectAsStateWithLifecycle()
     val displayed = remember(songs) { songs }
+
+    if (loading) {
+        Box(modifier = Modifier.fillMaxSize().background(AppInk.copy(alpha = 0.02f)), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                androidx.compose.material3.CircularProgressIndicator(color = AppAccent)
+                Spacer(Modifier.height(16.dp))
+                Text("正在扫描音乐库…", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        return
+    }
 
     Column(
         modifier = Modifier

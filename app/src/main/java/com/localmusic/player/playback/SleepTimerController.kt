@@ -43,8 +43,11 @@ object SleepTimerController {
                 delay(500)
             }
             _remainingMs.value = 0L
-            if (fadeOut) fadeOutAndPause()
-            PlayerConnection.controller()?.pause()
+            if (fadeOut) {
+                fadeOutAndPause()
+            } else {
+                PlayerConnection.controller()?.pause()
+            }
             _active.value = false
         }
     }
@@ -64,8 +67,11 @@ object SleepTimerController {
         _remainingTracks.value = remaining.coerceAtLeast(0)
         if (remaining <= 0) {
             scope.launch {
-                if (fadeOut) fadeOutAndPause()
-                PlayerConnection.controller()?.pause()
+                if (fadeOut) {
+                    fadeOutAndPause()
+                } else {
+                    PlayerConnection.controller()?.pause()
+                }
                 _active.value = false
                 trackMode = false
             }
@@ -82,12 +88,14 @@ object SleepTimerController {
     }
 
     private suspend fun fadeOutAndPause() {
+        val restore = PlayerConnection.currentVolume()
         val steps = 20
         for (i in steps downTo 0) {
-            PlayerConnection.setVolume(i / steps.toFloat())
+            PlayerConnection.setVolume(restore * (i / steps.toFloat()))
             delay(100)
         }
-        PlayerConnection.setVolume(1f)
+        PlayerConnection.controller()?.pause()
+        PlayerConnection.setVolume(restore)
     }
 
     fun formatRemaining(): String {
