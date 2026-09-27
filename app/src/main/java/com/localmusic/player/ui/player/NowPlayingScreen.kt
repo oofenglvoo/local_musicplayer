@@ -277,48 +277,68 @@ fun NowPlayingScreen(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(onClick = { PlayerConnection.cyclePlayMode() }) {
-                    Icon(
-                        when (playMode) {
-                            PlayMode.SHUFFLE -> Icons.Default.Shuffle
-                            PlayMode.REPEAT_ONE -> Icons.Default.RepeatOne
-                            PlayMode.SEQUENTIAL -> Icons.Default.Repeat
-                        },
-                        contentDescription = stringResource(playMode.labelRes),
-                        tint = if (playMode == PlayMode.SEQUENTIAL) MaterialTheme.colorScheme.onSurface
-                        else AppAccent,
-                    )
-                }
-                IconButton(onClick = { PlayerConnection.previous() }) {
-                    Icon(
-                        Icons.Default.SkipPrevious,
-                        contentDescription = stringResource(R.string.common_previous),
-                        modifier = Modifier.size(40.dp),
-                    )
-                }
                 Box(
-                    modifier = Modifier
-                        .size(72.dp)
-                        .clip(CircleShape)
-                        .background(AppAccent)
-                        .clickable {
-                            if (!nowPlaying.isEmpty) PlayerConnection.togglePlayPause()
-                        },
+                    modifier = Modifier.weight(1f),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(
-                        if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = stringResource(R.string.common_play_pause),
-                        tint = Color.Black,
-                        modifier = Modifier.size(40.dp),
-                    )
+                    IconButton(onClick = { PlayerConnection.cyclePlayMode() }) {
+                        Icon(
+                            when (playMode) {
+                                PlayMode.SHUFFLE -> Icons.Default.Shuffle
+                                PlayMode.REPEAT_ONE -> Icons.Default.RepeatOne
+                                PlayMode.SEQUENTIAL -> Icons.Default.Repeat
+                            },
+                            contentDescription = stringResource(playMode.labelRes),
+                            tint = if (playMode == PlayMode.SEQUENTIAL) MaterialTheme.colorScheme.onSurface
+                            else AppAccent,
+                        )
+                    }
                 }
-                IconButton(onClick = { PlayerConnection.next() }) {
-                    Icon(
-                        Icons.Default.SkipNext,
-                        contentDescription = stringResource(R.string.common_next),
-                        modifier = Modifier.size(40.dp),
-                    )
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    IconButton(onClick = { PlayerConnection.previous() }) {
+                        Icon(
+                            Icons.Default.SkipPrevious,
+                            contentDescription = stringResource(R.string.common_previous),
+                            modifier = Modifier.size(40.dp),
+                        )
+                    }
+                }
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(72.dp)
+                            .clip(CircleShape)
+                            .background(AppAccent)
+                            .clickable {
+                                if (!nowPlaying.isEmpty) PlayerConnection.togglePlayPause()
+                            },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = stringResource(R.string.common_play_pause),
+                            tint = Color.Black,
+                            modifier = Modifier.size(40.dp),
+                        )
+                    }
+                }
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    IconButton(onClick = { PlayerConnection.next() }) {
+                        Icon(
+                            Icons.Default.SkipNext,
+                            contentDescription = stringResource(R.string.common_next),
+                            modifier = Modifier.size(40.dp),
+                        )
+                    }
                 }
             }
 

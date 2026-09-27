@@ -2,6 +2,7 @@
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -44,6 +45,7 @@ fun AutoListScreen(
     }.collectAsStateWithLifecycle()
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
                 title = { Text("${stringResource(kind.labelRes)} · ${songs.size}") },
@@ -97,6 +99,7 @@ fun AlbumDetailScreen(
 
     val current = album
     Scaffold(
+        contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
                 title = { Text(current?.album ?: stringResource(R.string.library_tab_albums)) },
@@ -166,6 +169,7 @@ fun ArtistDetailScreen(
 
     val current = artist
     Scaffold(
+        contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
                 title = { Text(current?.artist ?: stringResource(R.string.library_tab_artists)) },
@@ -231,6 +235,7 @@ fun FolderDetailScreen(
     val folder: FolderGroup? = folders.firstOrNull { it.path == folderPath }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
                 title = {

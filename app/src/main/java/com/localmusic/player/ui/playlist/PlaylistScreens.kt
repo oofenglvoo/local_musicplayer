@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -80,6 +81,7 @@ fun PlaylistDetailScreen(
     var selectedIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
                 title = { Text(playlistName.ifBlank { stringResource(R.string.library_tab_playlists) }) },
@@ -279,9 +281,10 @@ fun FavoritesScreen(
     var showClearConfirm by remember { mutableStateOf(false) }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
-                title = { Text("${stringResource(R.string.playlist_favorites)} · ${songs.size}") },
+                title = { Text("${stringResource(R.string.playlist_favorites)} 路 ${songs.size}") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
