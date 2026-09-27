@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -83,7 +82,7 @@ import com.localmusic.player.data.toModel
 import com.localmusic.player.lyrics.LyricsInlineViewModel
 import com.localmusic.player.lyrics.SyncedLyrics
 import com.localmusic.player.playback.PlayerConnection
-import com.localmusic.player.playback.RepeatMode
+import com.localmusic.player.playback.PlayMode
 import com.localmusic.player.ui.Artwork
 import com.localmusic.player.ui.theme.AppAccent
 import com.localmusic.player.util.toDurationString
@@ -100,8 +99,7 @@ fun NowPlayingScreen(
 ) {
     val nowPlaying by PlayerConnection.nowPlaying.collectAsStateWithLifecycle()
     val isPlaying by PlayerConnection.isPlaying.collectAsStateWithLifecycle()
-    val shuffle by PlayerConnection.shuffle.collectAsStateWithLifecycle()
-    val repeat by PlayerConnection.repeat.collectAsStateWithLifecycle()
+    val playMode by PlayerConnection.playMode.collectAsStateWithLifecycle()
     val queue by PlayerConnection.queue.collectAsStateWithLifecycle()
     val currentIndex by PlayerConnection.currentIndex.collectAsStateWithLifecycle()
 
@@ -151,7 +149,6 @@ fun NowPlayingScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .statusBarsPadding()
                     .padding(horizontal = 20.dp),
             ) {
             Row(
@@ -280,11 +277,16 @@ fun NowPlayingScreen(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(onClick = { PlayerConnection.toggleShuffle() }) {
+                IconButton(onClick = { PlayerConnection.cyclePlayMode() }) {
                     Icon(
-                        Icons.Default.Shuffle,
-                        contentDescription = stringResource(R.string.common_shuffle),
-                        tint = if (shuffle) AppAccent else MaterialTheme.colorScheme.onSurface,
+                        when (playMode) {
+                            PlayMode.SHUFFLE -> Icons.Default.Shuffle
+                            PlayMode.REPEAT_ONE -> Icons.Default.RepeatOne
+                            PlayMode.SEQUENTIAL -> Icons.Default.Repeat
+                        },
+                        contentDescription = stringResource(playMode.labelRes),
+                        tint = if (playMode == PlayMode.SEQUENTIAL) MaterialTheme.colorScheme.onSurface
+                        else AppAccent,
                     )
                 }
                 IconButton(onClick = { PlayerConnection.previous() }) {
@@ -316,17 +318,6 @@ fun NowPlayingScreen(
                         Icons.Default.SkipNext,
                         contentDescription = stringResource(R.string.common_next),
                         modifier = Modifier.size(40.dp),
-                    )
-                }
-                IconButton(onClick = { PlayerConnection.cycleRepeat() }) {
-                    Icon(
-                        when (repeat) {
-                            RepeatMode.ONE -> Icons.Default.RepeatOne
-                            else -> Icons.Default.Repeat
-                        },
-                        contentDescription = stringResource(repeat.labelRes),
-                        tint = if (repeat != RepeatMode.OFF) AppAccent
-                        else MaterialTheme.colorScheme.onSurface,
                     )
                 }
             }
@@ -738,7 +729,6 @@ private fun TimeLabel(ms: Long) {
 fun MiniPlayer(onExpand: () -> Unit, onOpenQueue: () -> Unit = {}) {
     val nowPlaying by PlayerConnection.nowPlaying.collectAsStateWithLifecycle()
     val isPlaying by PlayerConnection.isPlaying.collectAsStateWithLifecycle()
-    val shuffle by PlayerConnection.shuffle.collectAsStateWithLifecycle()
 
     val controller = PlayerConnection.controller()
     var positionMs by remember { mutableLongStateOf(0L) }

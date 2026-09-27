@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -26,6 +25,7 @@ import com.localmusic.player.R
 import com.localmusic.player.data.AlbumGroup
 import com.localmusic.player.data.FolderGroup
 import com.localmusic.player.playback.PlayerConnection
+import com.localmusic.player.ui.ScrollableSongList
 import com.localmusic.player.ui.SongRow
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,6 +37,7 @@ fun AutoListScreen(
 ) {
     val favoriteIds by viewModel.favoriteIds.collectAsStateWithLifecycle()
     val songs by when (kind) {
+        AutoList.ALL_SONGS -> viewModel.sortedSongs
         AutoList.RECENTLY_ADDED -> viewModel.recentlyAdded
         AutoList.RECENTLY_PLAYED -> viewModel.recentlyPlayed
         AutoList.MOST_PLAYED -> viewModel.mostPlayed
@@ -66,7 +67,7 @@ fun AutoListScreen(
                 EmptyHint(stringResource(R.string.library_empty_hint))
             }
         } else {
-            LazyColumn(
+            ScrollableSongList(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentPadding = PaddingValues(bottom = 8.dp),
             ) {
@@ -120,7 +121,7 @@ fun AlbumDetailScreen(
                 EmptyHint(stringResource(R.string.library_empty_hint))
             }
         } else {
-            LazyColumn(
+            ScrollableSongList(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentPadding = PaddingValues(bottom = 8.dp),
             ) {
@@ -189,7 +190,7 @@ fun ArtistDetailScreen(
                 EmptyHint(stringResource(R.string.library_empty_hint))
             }
         } else {
-            LazyColumn(
+            ScrollableSongList(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentPadding = PaddingValues(bottom = 8.dp),
             ) {
@@ -251,7 +252,7 @@ fun FolderDetailScreen(
                 EmptyHint(stringResource(R.string.library_empty_hint))
             }
         } else {
-            LazyColumn(
+            ScrollableSongList(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentPadding = PaddingValues(bottom = 8.dp),
             ) {

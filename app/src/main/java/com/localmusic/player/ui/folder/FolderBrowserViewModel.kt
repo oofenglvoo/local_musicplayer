@@ -1,5 +1,6 @@
 package com.localmusic.player.ui.folder
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.localmusic.player.data.FolderScanner
@@ -10,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -23,9 +25,17 @@ data class BrowserState(
     val canGoUp: Boolean = false,
 )
 
+data class ScanProgressState(
+    val scanned: Int,
+    val total: Int,
+    val currentName: String,
+)
+
 @HiltViewModel
 class FolderBrowserViewModel @Inject constructor(
     private val repository: MusicRepository,
+    private val settingsStore: com.localmusic.player.data.SettingsStore,
+    savedStateHandle: SavedStateHandle,
     @dagger.hilt.android.qualifiers.ApplicationContext private val appContext: android.content.Context,
 ) : ViewModel() {
 
@@ -35,8 +45,14 @@ class FolderBrowserViewModel @Inject constructor(
     private val _scanning = MutableStateFlow(false)
     val scanning: StateFlow<Boolean> = _scanning.asStateFlow()
 
+    private val _progress = MutableStateFlow<ScanProgressState?>(null)
+    val progress: StateFlow<ScanProgressState?> = _progress.asStateFlow()
+
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message.asStateFlow()
+
+    val targetPlaylistId: Long = savedStateHandle.get<Long>(ARG_PLAYLIST_ID) ?: -1L
+    val isPlaylistMode: Boolean = targetPlaylistId > 0L
 
     val scannedFolders: StateFlow<Set<String>> = repository.scannedFolders
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
@@ -56,7 +72,14 @@ class FolderBrowserViewModel @Inject constructor(
                     canGoUp = dir.parentFile?.let { it.canRead() && it.absolutePath != dir.absolutePath } == true,
                 )
             }
+            runCatching { settingsStore.setLastBrowserDir(dir.absolutePath) }
         }
+    }
+
+    suspend fun rememberAndResolveStart(): File? {
+        val saved = runCatching { settingsStore.lastBrowserDir.first() }.getOrNull()
+        val savedDir = saved?.let { File(it) }?.takeIf { it.exists() && it.isDirectory }
+        return savedDir ?: shortcuts.firstOrNull() ?: roots.firstOrNull()
     }
 
     fun goUp() {
@@ -67,10 +90,19 @@ class FolderBrowserViewModel @Inject constructor(
     fun scanCurrentFolder() {
         val dir = _state.value.currentDir ?: return
         _scanning.value = true
+        _progress.value = ScanProgressState(0, 0, "")
         viewModelScope.launch {
-            val count = runCatching { repository.rebuildWithFolder(dir.absolutePath) }
-                .getOrDefault(0)
+            val count = runCatching {
+                if (isPlaylistMode) {
+                    repository.scanFolderIntoPlaylist(targetPlaylistId, dir.absolutePath) { p ->
+                        _progress.value = ScanProgressState(p.scanned, p.total, p.currentName)
+                    }
+                } else {
+                    repository.rebuildWithFolder(dir.absolutePath)
+                }
+            }.getOrDefault(0)
             _scanning.value = false
+            _progress.value = null
             _message.value = appContext.getString(
                 com.localmusic.player.R.string.folder_scanned_message,
                 dir.name,
@@ -119,5 +151,9 @@ class FolderBrowserViewModel @Inject constructor(
 
     fun consumeMessage() {
         _message.value = null
+    }
+
+    companion object {
+        const val ARG_PLAYLIST_ID = "playlistId"
     }
 }

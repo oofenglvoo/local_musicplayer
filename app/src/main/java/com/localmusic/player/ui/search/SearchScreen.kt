@@ -49,6 +49,7 @@ import com.localmusic.player.R
 import com.localmusic.player.data.AlbumArtSource
 import com.localmusic.player.playback.PlayerConnection
 import com.localmusic.player.ui.Artwork
+import com.localmusic.player.ui.ScrollableSongList
 import com.localmusic.player.ui.library.SectionHeader
 import com.localmusic.player.ui.SongRow
 
@@ -136,7 +137,7 @@ fun SearchScreen(
                         }
                     }
                     when (SearchTab.entries[tab]) {
-                        SearchTab.SONGS -> LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        SearchTab.SONGS -> ScrollableSongList(modifier = Modifier.fillMaxSize()) {
                             items(results.songs, key = { it.id }) { song ->
                                 SongRow(
                                     song = song,

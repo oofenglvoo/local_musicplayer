@@ -91,4 +91,8 @@ class FavoritesViewModel @Inject constructor(
     fun toggleFavorite(songId: Long) {
         viewModelScope.launch { repository.toggleFavorite(songId) }
     }
+
+    fun clearFavorites() {
+        viewModelScope.launch { repository.clearFavorites() }
+    }
 }

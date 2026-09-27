@@ -58,7 +58,6 @@ import com.localmusic.player.ui.library.AlbumDetailScreen
 import com.localmusic.player.ui.library.ArtistDetailScreen
 import com.localmusic.player.ui.library.FolderDetailScreen
 import com.localmusic.player.ui.library.LibraryViewModel
-import com.localmusic.player.ui.local.LocalScreen
 import com.localmusic.player.ui.player.MiniPlayer
 import com.localmusic.player.ui.player.NowPlayingScreen
 import com.localmusic.player.ui.player.QueueScreen
@@ -136,12 +135,10 @@ private data class BottomTab(
 @Composable
 private fun AppRoot() {
     val homeLabel = stringResource(R.string.tab_home)
-    val localLabel = stringResource(R.string.tab_local)
     val playlistsLabel = stringResource(R.string.tab_playlists)
     val profileLabel = stringResource(R.string.tab_profile)
     val tabs = listOf(
         BottomTab("home", homeLabel, Icons.Filled.Home, Icons.Outlined.Home),
-        BottomTab("local", localLabel, Icons.Filled.Folder, Icons.Outlined.Folder),
         BottomTab("playlists", playlistsLabel, Icons.Filled.LibraryMusic, Icons.Outlined.LibraryMusic),
         BottomTab("profile", profileLabel, Icons.Filled.Person, Icons.Outlined.Person),
     )
@@ -236,27 +233,17 @@ private fun AppRoot() {
                                 ) {
                                     composable("home") {
                                         HomeScreen(
-                                            onOpenLocal = {
-                                                selectedTab = 1
-                                                navController.navigate("local") {
-                                                    popUpTo("home") { saveState = true }
-                                                    launchSingleTop = true
-                                                    restoreState = false
-                                                }
-                                            },
                                             onOpenSearch = { navController.navigate("search") },
+                                            onOpenAllSongs = { navController.navigate("allSongs") },
                                             onOpenPlaylist = { id -> navController.navigate("playlist/$id") },
-                                            onPlaySongs = { list, index -> PlayerConnection.playSongs(list, index) },
+                                            onOpenFavorites = { navController.navigate("favorites") },
                                         )
                                     }
-                                    composable("local") {
-                                        LocalScreen(
+                                    composable("allSongs") {
+                                        com.localmusic.player.ui.library.AutoListScreen(
+                                            kind = com.localmusic.player.ui.library.AutoList.ALL_SONGS,
                                             viewModel = hiltViewModel(),
-                                            onOpenFolderPicker = { navController.navigate("folderPicker") },
-                                            onPlaySongs = { list, index -> PlayerConnection.playSongs(list, index) },
-                                            onOpenAlbum = { album -> navController.navigate("album/${enc(album.key)}") },
-                                            onOpenArtist = { artist -> navController.navigate("artist/${enc(artist.artist)}") },
-                                            onOpenFolder = { folder -> navController.navigate("folderDetail/${enc(folder.path)}") },
+                                            onBack = { navController.popBackStack() },
                                         )
                                     }
                                     composable("playlists") {
@@ -280,11 +267,23 @@ private fun AppRoot() {
                                     composable("favorites") {
                                         FavoritesScreen(onBack = { navController.popBackStack() })
                                     }
-                                    composable("folderPicker?exclude={exclude}") { entry ->
+                                    composable(
+                                        "folderPicker?exclude={exclude}&playlistId={playlistId}",
+                                        arguments = listOf(
+                                            navArgument("exclude") { defaultValue = "false" },
+                                            navArgument("playlistId") { type = NavType.LongType; defaultValue = -1L },
+                                        ),
+                                    ) { entry ->
                                         val exclude = entry.arguments?.getString("exclude") == "true"
                                         FolderBrowserScreen(
                                             onBack = { navController.popBackStack() },
                                             excludeMode = exclude,
+                                        )
+                                    }
+                                    composable("folderPicker") {
+                                        FolderBrowserScreen(
+                                            onBack = { navController.popBackStack() },
+                                            excludeMode = false,
                                         )
                                     }
                                     composable("settings") {
@@ -336,6 +335,7 @@ private fun AppRoot() {
                                         PlaylistDetailScreen(
                                             playlistId = id,
                                             onBack = { navController.popBackStack() },
+                                            onAddSongs = { navController.navigate("folderPicker?exclude=false&playlistId=$id") },
                                         )
                                     }
                                     composable(

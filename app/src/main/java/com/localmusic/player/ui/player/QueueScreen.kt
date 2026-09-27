@@ -16,6 +16,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DragHandle
+import androidx.compose.material.icons.filled.Repeat
+import androidx.compose.material.icons.filled.RepeatOne
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -40,6 +42,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.localmusic.player.R
+import com.localmusic.player.playback.PlayMode
 import com.localmusic.player.playback.PlayerConnection
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,7 +50,7 @@ import com.localmusic.player.playback.PlayerConnection
 fun QueueScreen(onBack: () -> Unit) {
     val queue by PlayerConnection.queue.collectAsStateWithLifecycle()
     val currentIndex by PlayerConnection.currentIndex.collectAsStateWithLifecycle()
-    val shuffle by PlayerConnection.shuffle.collectAsStateWithLifecycle()
+    val playMode by PlayerConnection.playMode.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
 
     var dragFrom by remember { mutableStateOf(-1) }
@@ -68,12 +71,16 @@ fun QueueScreen(onBack: () -> Unit) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = { PlayerConnection.toggleShuffle() }) {
+                    IconButton(onClick = { PlayerConnection.cyclePlayMode() }) {
                         Icon(
-                            Icons.Default.Shuffle,
-                            contentDescription = stringResource(R.string.common_shuffle),
-                            tint = if (shuffle) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                            when (playMode) {
+                                PlayMode.SHUFFLE -> Icons.Default.Shuffle
+                                PlayMode.REPEAT_ONE -> Icons.Default.RepeatOne
+                                PlayMode.SEQUENTIAL -> Icons.Default.Repeat
+                            },
+                            contentDescription = stringResource(playMode.labelRes),
+                            tint = if (playMode == PlayMode.SEQUENTIAL) MaterialTheme.colorScheme.onSurfaceVariant
+                            else MaterialTheme.colorScheme.primary,
                         )
                     }
                 },

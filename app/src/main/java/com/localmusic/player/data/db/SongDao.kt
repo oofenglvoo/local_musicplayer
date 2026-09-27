@@ -105,6 +105,11 @@ interface SongDao {
     suspend fun replaceAll(songs: List<SongEntity>) {
         clear()
         clearFts()
+        upsertAll(songs)
+    }
+
+    @Transaction
+    suspend fun upsertAll(songs: List<SongEntity>) {
         insertAll(songs)
         insertFts(
             songs.map {

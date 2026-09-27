@@ -49,6 +49,7 @@ class SettingsStore @Inject constructor(
     private val backgroundSecondaryColorKey = intPreferencesKey("background_secondary_color")
     private val backgroundBlurKey = intPreferencesKey("background_blur")
     private val backgroundDimKey = intPreferencesKey("background_dim")
+    private val lastBrowserDirKey = stringPreferencesKey("last_browser_dir")
 
     val scannedFolders: Flow<Set<String>> =
         context.dataStore.data.map { it[scannedFoldersKey] ?: emptySet() }
@@ -58,6 +59,9 @@ class SettingsStore @Inject constructor(
 
     val minDurationSec: Flow<Int> =
         context.dataStore.data.map { it[minDurationKey] ?: 0 }
+
+    val lastBrowserDir: Flow<String?> =
+        context.dataStore.data.map { it[lastBrowserDirKey] }
 
     val sortField: Flow<SongSort> =
         context.dataStore.data.map { SongSort.valueOf(it[sortFieldKey] ?: SongSort.TITLE.name) }
@@ -127,6 +131,8 @@ class SettingsStore @Inject constructor(
     }
 
     suspend fun setMinDurationSec(sec: Int) = context.dataStore.edit { it[minDurationKey] = sec }
+
+    suspend fun setLastBrowserDir(path: String) = context.dataStore.edit { it[lastBrowserDirKey] = path }
 
     suspend fun setSortField(field: SongSort) = context.dataStore.edit { it[sortFieldKey] = field.name }
 

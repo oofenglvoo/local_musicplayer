@@ -43,6 +43,7 @@
     <string name="common_browse_play">浏览并播放</string>
     <string name="common_quick_entry">快速入口</string>
     <string name="common_all_songs">全部歌曲</string>
+    <string name="home_all_songs_subtitle">浏览所有已添加的歌曲</string>
     <string name="common_no_match_song">没有匹配的歌曲</string>
     <string name="common_no_local_music">未发现本地音乐，点击右上角扫描目录</string>
     <string name="common_no_albums">暂无专辑</string>
@@ -319,6 +320,7 @@
     <string name="folder_audio_count">%d 个音频文件</string>
     <string name="folder_up">上一级</string>
     <string name="folder_scan_current">扫描当前目录</string>
+    <string name="folder_scan_to_playlist">扫描此目录并添加到歌单</string>
     <string name="folder_exclude_current">排除当前目录</string>
     <string name="settings_personalize">个性化你的播放器</string>
     <string name="settings_theme_subtitle">主题、强调色、播放背景与布局</string>
@@ -340,6 +342,8 @@
     <string name="artwork_pick_image">选择图片</string>
     <string name="artwork_saving">保存中…</string>
     <string name="folder_scanned_message">已扫描 %1$s，音乐库共 %2$d 首</string>
+    <string name="folder_scanning_progress">正在扫描 %1$d/%2$d</string>
+    <string name="folder_scanning_preparing">正在准备扫描…</string>
     <string name="folder_excluded_message">已排除 %1$s，音乐库共 %2$d 首</string>
     <string name="folder_removed_message">已移除目录并更新音乐库</string>
     <string name="folder_rescan_message">重新扫描完成，共 %d 首</string>
@@ -372,7 +376,11 @@
     <string name="playlist_delete_short">删除歌单</string>
     <string name="playlist_delete_confirm_short">确定删除「%s」吗？歌曲文件不会被删除。</string>
     <string name="playlist_mine">我的歌单</string>
+    <string name="playlist_scan_folder">扫描目录添加</string>
+    <string name="playlist_add_from_library">从歌曲库添加</string>
     <string name="playlist_favorites_subtitle">收藏的歌曲都在这里</string>
+    <string name="favorites_clear">清空收藏</string>
+    <string name="favorites_clear_confirm">确定清空收藏夹中的所有歌曲吗？歌曲文件不会被删除。</string>
 
     <!-- 关于 -->
     <string name="about_title">关于</string>

@@ -1,7 +1,6 @@
 package com.localmusic.player.ui.home
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,183 +8,246 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Smartphone
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.localmusic.player.R
+import com.localmusic.player.data.AlbumArtSource
 import com.localmusic.player.data.db.SongEntity
-import com.localmusic.player.playback.PlayerConnection
-import com.localmusic.player.ui.SongArtwork
+import com.localmusic.player.ui.Artwork
+import com.localmusic.player.ui.FastScrollbar
 import com.localmusic.player.ui.library.LibraryViewModel
+import com.localmusic.player.ui.playlist.FavoritesViewModel
 import com.localmusic.player.ui.theme.AppAccent
-import com.localmusic.player.ui.theme.AppPageTop
-import com.localmusic.player.ui.theme.AppSurfaceSoft
+
+private data class PlaylistCard(
+    val title: String,
+    val subtitle: String,
+    val song: SongEntity?,
+    val accent: Color,
+    val onClick: () -> Unit,
+)
 
 @Composable
 fun HomeScreen(
-    onOpenLocal: () -> Unit,
     onOpenSearch: () -> Unit,
+    onOpenAllSongs: () -> Unit,
     onOpenPlaylist: (Long) -> Unit,
-    onPlaySongs: (List<SongEntity>, Int) -> Unit,
+    onOpenFavorites: () -> Unit,
     viewModel: LibraryViewModel = hiltViewModel(),
 ) {
-    val songs by viewModel.sortedSongs.collectAsStateWithLifecycle()
-    var query by remember { mutableStateOf("") }
-
-    val displayed = remember(songs, query) {
-        if (query.isBlank()) songs
-        else songs.filter {
-            it.title.contains(query, ignoreCase = true) ||
-                it.artist.contains(query, ignoreCase = true) ||
-                it.album.contains(query, ignoreCase = true)
-        }
-    }
+    val playlists by viewModel.playlists.collectAsStateWithLifecycle()
+    val favoriteViewModel: FavoritesViewModel = hiltViewModel()
+    val favoriteSongs by favoriteViewModel.songs.collectAsStateWithLifecycle()
+    var showCreate by remember { mutableStateOf(false) }
+    var renameTarget by remember { mutableStateOf<Pair<Long, String>?>(null) }
+    var deleteTarget by remember { mutableStateOf<Pair<Long, String>?>(null) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                androidx.compose.ui.graphics.Brush.verticalGradient(
+                Brush.verticalGradient(
                     listOf(com.localmusic.player.ui.theme.AppPageTop, MaterialTheme.colorScheme.background),
                 ),
             ),
     ) {
-        Column(modifier = Modifier.statusBarsPadding()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                SearchField(
-                    value = query,
-                    onValueChange = { query = it },
-                    onClick = onOpenSearch,
-                    modifier = Modifier.weight(1f),
-                )
-                Spacer(Modifier.width(12.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable(onClick = onOpenLocal),
-                ) {
-                    Icon(
-                        Icons.Default.Smartphone,
-                        contentDescription = null,
-                        tint = AppAccent,
-                        modifier = Modifier.size(26.dp),
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text(stringResource(R.string.tab_local), style = MaterialTheme.typography.titleMedium)
-                }
-            }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SearchEntry(onClick = onOpenSearch, modifier = Modifier.weight(1f))
+        }
 
-            
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                stringResource(R.string.tab_home),
+                style = MaterialTheme.typography.displaySmall,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f),
+            )
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.clickable { showCreate = true },
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(AppAccent),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        Icons.Default.PlayArrow,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(26.dp),
-                    )
-                }
-                Text(
-                    stringResource(R.string.common_play_all),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = AppAccent,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.clickable {
-                        if (displayed.isNotEmpty()) onPlaySongs(displayed, 0)
-                    },
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = null,
+                    tint = AppAccent,
+                    modifier = Modifier.size(20.dp),
                 )
+                Text(stringResource(R.string.playlist_new_short), style = MaterialTheme.typography.bodyMedium, color = AppAccent)
             }
         }
 
-        if (displayed.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    if (songs.isEmpty()) stringResource(R.string.home_empty) else stringResource(R.string.home_no_match),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth().weight(1f),
-                contentPadding = PaddingValues(bottom = 24.dp),
+        val gridState = rememberSaveable(saver = LazyGridState.Saver) { LazyGridState() }
+        Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
+            LazyVerticalGrid(
+                state = gridState,
+                columns = GridCells.Fixed(2),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                itemsIndexed(displayed, key = { _, s -> s.id }) { index, song ->
-                    HomeSongRow(
-                        song = song,
-                        onPlay = { onPlaySongs(displayed, index) },
+                item {
+                    PlaylistCardItem(
+                        PlaylistCard(
+                            title = stringResource(R.string.common_all_songs),
+                            subtitle = stringResource(R.string.home_all_songs_subtitle),
+                            song = null,
+                            accent = AppAccent,
+                            onClick = onOpenAllSongs,
+                        ),
+                        badge = Icons.Default.MusicNote,
+                    )
+                }
+                item {
+                    PlaylistCardItem(
+                        PlaylistCard(
+                            title = stringResource(R.string.playlist_favorites),
+                            subtitle = stringResource(R.string.playlist_favorites_subtitle),
+                            song = favoriteSongs.firstOrNull(),
+                            accent = AppAccent,
+                            onClick = onOpenFavorites,
+                        ),
+                        badge = Icons.Default.Favorite,
+                    )
+                }
+                items(playlists, key = { it.id }) { playlist ->
+                    val playlistSongs by viewModel.songsInPlaylist(playlist.id)
+                        .collectAsStateWithLifecycle(emptyList())
+                    PlaylistCardItem(
+                        PlaylistCard(
+                            title = playlist.name,
+                            subtitle = stringResource(R.string.playlist_mine),
+                            song = playlistSongs.firstOrNull(),
+                            accent = AppAccent,
+                        ) { onOpenPlaylist(playlist.id) },
+                        onMore = { renameTarget = playlist.id to playlist.name },
                     )
                 }
             }
+            FastScrollbar(
+                gridState = gridState,
+                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+            )
         }
+    }
+
+    if (showCreate) {
+        var name by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showCreate = false },
+            title = { Text(stringResource(R.string.playlist_new_short)) },
+            text = {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    placeholder = { Text(stringResource(R.string.playlist_name_short)) },
+                    singleLine = true,
+                )
+            },
+            confirmButton = {
+                DialogActionButton(onClick = {
+                    if (name.isNotBlank()) viewModel.createPlaylist(name.trim())
+                    showCreate = false
+                }) { Text(stringResource(R.string.common_create)) }
+            },
+            dismissButton = {
+                DialogActionButton(onClick = { showCreate = false }) { Text(stringResource(R.string.common_cancel)) }
+            },
+        )
+    }
+
+    renameTarget?.let { (id, current) ->
+        var name by remember(renameTarget) { mutableStateOf(current) }
+        AlertDialog(
+            onDismissRequest = { renameTarget = null },
+            title = { Text(stringResource(R.string.playlist_actions)) },
+            text = { OutlinedTextField(value = name, onValueChange = { name = it }, singleLine = true) },
+            confirmButton = {
+                DialogActionButton(onClick = {
+                    if (name.isNotBlank()) viewModel.renamePlaylist(id, name.trim())
+                    renameTarget = null
+                }) { Text(stringResource(R.string.playlist_rename)) }
+            },
+            dismissButton = {
+                DialogActionButton(onClick = {
+                    deleteTarget = id to current
+                    renameTarget = null
+                }) { Text(stringResource(R.string.common_delete)) }
+            },
+        )
+    }
+    deleteTarget?.let { (id, name) ->
+        AlertDialog(
+            onDismissRequest = { deleteTarget = null },
+            title = { Text(stringResource(R.string.playlist_delete_short)) },
+            text = { Text(stringResource(R.string.playlist_delete_confirm_short, name)) },
+            confirmButton = { DialogActionButton(onClick = { viewModel.deletePlaylist(id); deleteTarget = null }) { Text(stringResource(R.string.common_delete)) } },
+            dismissButton = { DialogActionButton(onClick = { deleteTarget = null }) { Text(stringResource(R.string.common_cancel)) } },
+        )
     }
 }
 
 @Composable
-private fun SearchField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
+private fun SearchEntry(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .height(48.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(Color.White)
-            .border(1.5.dp, Color(0xFF1A1C1B), RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surface)
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -197,77 +259,101 @@ private fun SearchField(
             modifier = Modifier.size(20.dp),
         )
         Spacer(Modifier.width(8.dp))
-        Box(modifier = Modifier.weight(1f)) {
-            if (value.isEmpty()) {
-                Text(
-                    stringResource(R.string.home_search_hint),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            BasicTextField(
-                value = value,
-                onValueChange = onValueChange,
-                singleLine = true,
-                textStyle = TextStyle(
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 15.sp,
-                ),
-                cursorBrush = SolidColor(AppAccent),
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
+        Text(
+            stringResource(R.string.home_search_hint),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
 @Composable
-private fun HomeSongRow(song: SongEntity, onPlay: () -> Unit) {
-    Row(
+private fun DialogActionButton(
+    onClick: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    TextButton(
+        onClick = onClick,
         modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onPlay)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        SongArtwork(
-            song = song,
-            modifier = Modifier
-                .size(58.dp)
-                .clip(RoundedCornerShape(10.dp)),
-        )
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 12.dp),
-        ) {
-            Text(
-                song.title,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                song.artist,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
+            .heightIn(min = 52.dp)
+            .padding(horizontal = 12.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+    ) { content() }
+}
+
+@Composable
+private fun PlaylistCardItem(
+    card: PlaylistCard,
+    badge: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    onMore: (() -> Unit)? = null,
+) {
+    Column(modifier = Modifier.clickable(onClick = card.onClick)) {
         Box(
             modifier = Modifier
-                .size(34.dp)
-                .clip(CircleShape)
-                .background(AppAccent)
-                .clickable(onClick = onPlay),
-            contentAlignment = Alignment.Center,
+                .fillMaxWidth()
+                .aspectRatio(1.15f)
+                .clip(RoundedCornerShape(14.dp))
+                .background(
+                    Brush.linearGradient(
+                        listOf(card.accent.copy(alpha = 0.85f), card.accent.copy(alpha = 0.45f)),
+                    ),
+                ),
         ) {
-            Icon(
-                Icons.Default.PlayArrow,
-                contentDescription = stringResource(R.string.common_play),
-                tint = Color.White,
-                modifier = Modifier.size(20.dp),
+            if (card.song != null) {
+                Artwork(
+                    source = AlbumArtSource(card.song.artworkPath, card.song.albumId),
+                    modifier = Modifier.fillMaxSize(),
+                )
+            } else if (badge != null) {
+                Icon(
+                    badge,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.align(Alignment.Center).size(48.dp),
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(10.dp)
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(Color.White),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    Icons.Default.PlayArrow,
+                    contentDescription = stringResource(R.string.common_play),
+                    tint = Color.Black,
+                    modifier = Modifier.size(24.dp),
+                )
+            }
+            if (onMore != null) {
+                Icon(
+                    Icons.Default.MoreVert,
+                    contentDescription = stringResource(R.string.playlist_actions),
+                    tint = Color.White,
+                    modifier = Modifier.align(Alignment.TopEnd).padding(10.dp).clickable(onClick = onMore),
+                )
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        Row {
+            Text(
+                card.title,
+                style = MaterialTheme.typography.titleMedium,
+                color = AppAccent,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(Modifier.size(6.dp))
+            Text(
+                card.subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }

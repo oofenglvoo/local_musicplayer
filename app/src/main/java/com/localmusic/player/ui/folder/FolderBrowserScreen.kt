@@ -1,12 +1,15 @@
 package com.localmusic.player.ui.folder
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,6 +26,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -52,6 +56,7 @@ fun FolderBrowserScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val scanning by viewModel.scanning.collectAsStateWithLifecycle()
+    val progress by viewModel.progress.collectAsStateWithLifecycle()
     val folders by viewModel.scannedFolders.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -64,8 +69,8 @@ fun FolderBrowserScreen(
     }
 
     LaunchedEffect(Unit) {
-        if (state.currentDir == null && viewModel.shortcuts.isNotEmpty()) {
-            viewModel.open(viewModel.shortcuts.first())
+        if (state.currentDir == null) {
+            viewModel.rememberAndResolveStart()?.let { viewModel.open(it) }
         }
     }
 
@@ -92,7 +97,7 @@ fun FolderBrowserScreen(
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             Column(modifier = Modifier.fillMaxSize()) {
 
-                if (folders.isNotEmpty()) {
+                if (folders.isNotEmpty() && !viewModel.isPlaylistMode) {
                     Text(
                         stringResource(R.string.folder_scanned_title),
                         style = MaterialTheme.typography.labelMedium,
@@ -147,7 +152,15 @@ fun FolderBrowserScreen(
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 4.dp),
                     ) {
-                        Text(stringResource(if (excludeMode) R.string.folder_exclude_current else R.string.folder_scan_current))
+                        Text(
+                            stringResource(
+                                when {
+                                    excludeMode -> R.string.folder_exclude_current
+                                    viewModel.isPlaylistMode -> R.string.folder_scan_to_playlist
+                                    else -> R.string.folder_scan_current
+                                },
+                            ),
+                        )
                     }
                 }
 
@@ -166,10 +179,44 @@ fun FolderBrowserScreen(
 
             if (scanning) {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background.copy(alpha = 0.92f)),
                     contentAlignment = Alignment.Center,
                 ) {
-                    CircularProgressIndicator()
+                    val p = progress
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 40.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        if (p != null && p.total > 0) {
+                            LinearProgressIndicator(
+                                progress = { p.scanned.toFloat() / p.total.toFloat() },
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            Spacer(Modifier.height(12.dp))
+                            Text(
+                                stringResource(R.string.folder_scanning_progress, p.scanned, p.total),
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                p.currentName,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        } else {
+                            CircularProgressIndicator()
+                            Spacer(Modifier.height(12.dp))
+                            Text(
+                                stringResource(R.string.folder_scanning_preparing),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
                 }
             }
         }

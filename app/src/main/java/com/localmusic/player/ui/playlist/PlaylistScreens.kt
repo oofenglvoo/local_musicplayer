@@ -6,11 +6,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
@@ -40,6 +43,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,6 +58,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.localmusic.player.R
 import com.localmusic.player.data.db.SongEntity
 import com.localmusic.player.playback.PlayerConnection
+import com.localmusic.player.ui.FastScrollbar
 import com.localmusic.player.ui.SongRow
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,6 +66,7 @@ import com.localmusic.player.ui.SongRow
 fun PlaylistDetailScreen(
     playlistId: Long,
     onBack: () -> Unit,
+    onAddSongs: () -> Unit = {},
     viewModel: PlaylistDetailViewModel = hiltViewModel(),
 ) {
     val songs by viewModel.songs.collectAsStateWithLifecycle()
@@ -68,6 +74,7 @@ fun PlaylistDetailScreen(
     val favoriteIds by viewModel.favoriteIds.collectAsStateWithLifecycle()
     val playlistName by viewModel.playlistName.collectAsStateWithLifecycle()
     var reorderMode by remember { mutableStateOf(false) }
+    var showAddMenu by remember { mutableStateOf(false) }
     var removeTarget by remember { mutableStateOf<SongEntity?>(null) }
     var showAddSongs by remember { mutableStateOf(false) }
     var selectedIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
@@ -88,8 +95,27 @@ fun PlaylistDetailScreen(
                     IconButton(onClick = { viewModel.shufflePlay() }) {
                         Icon(Icons.Default.Shuffle, contentDescription = stringResource(R.string.common_shuffle_all))
                     }
-                    IconButton(onClick = { selectedIds = emptySet(); showAddSongs = true }) {
-                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.playlist_add_songs))
+                    Box {
+                        IconButton(onClick = { showAddMenu = true }) {
+                            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.playlist_add_songs))
+                        }
+                        DropdownMenu(expanded = showAddMenu, onDismissRequest = { showAddMenu = false }) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.playlist_scan_folder)) },
+                                onClick = {
+                                    showAddMenu = false
+                                    onAddSongs()
+                                },
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.playlist_add_from_library)) },
+                                onClick = {
+                                    showAddMenu = false
+                                    selectedIds = emptySet()
+                                    showAddSongs = true
+                                },
+                            )
+                        }
                     }
                     IconButton(onClick = { reorderMode = !reorderMode }) {
                         Icon(
@@ -118,16 +144,23 @@ fun PlaylistDetailScreen(
                     onMove = { from, to -> viewModel.move(from, to) },
                 )
             } else {
-                LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
-                    items(songs, key = { it.id }) { song ->
-                        SongRow(
-                            song = song,
-                            isFavorite = song.id in favoriteIds,
-                            onFavoriteClick = { viewModel.toggleFavorite(song.id) },
-                            onClick = { PlayerConnection.playSongs(songs, songs.indexOf(song)) },
-                            onLongClick = { removeTarget = song },
-                        )
+                val listState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
+                Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+                    LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
+                        items(songs, key = { it.id }) { song ->
+                            SongRow(
+                                song = song,
+                                isFavorite = song.id in favoriteIds,
+                                onFavoriteClick = { viewModel.toggleFavorite(song.id) },
+                                onClick = { PlayerConnection.playSongs(songs, songs.indexOf(song)) },
+                                onLongClick = { removeTarget = song },
+                            )
+                        }
                     }
+                    FastScrollbar(
+                        listState = listState,
+                        modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                    )
                 }
             }
         }
@@ -243,6 +276,7 @@ fun FavoritesScreen(
 ) {
     val songs by viewModel.songs.collectAsStateWithLifecycle()
     val favoriteIds by viewModel.favoriteIds.collectAsStateWithLifecycle()
+    var showClearConfirm by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -258,6 +292,9 @@ fun FavoritesScreen(
                         IconButton(onClick = { PlayerConnection.playSongsShuffled(songs) }) {
                             Icon(Icons.Default.Shuffle, contentDescription = stringResource(R.string.common_shuffle_all))
                         }
+                        IconButton(onClick = { showClearConfirm = true }) {
+                            Icon(Icons.Default.DeleteSweep, contentDescription = stringResource(R.string.favorites_clear))
+                        }
                     }
                 },
             )
@@ -271,16 +308,40 @@ fun FavoritesScreen(
                 Text(stringResource(R.string.playlist_empty), style = MaterialTheme.typography.bodyMedium)
             }
         } else {
-            LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
-                items(songs, key = { it.id }) { song ->
-                    SongRow(
-                        song = song,
-                        isFavorite = song.id in favoriteIds,
-                        onFavoriteClick = { viewModel.toggleFavorite(song.id) },
-                        onClick = { PlayerConnection.playSongs(songs, songs.indexOf(song)) },
-                    )
+            val listState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
+            Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+                LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
+                    items(songs, key = { it.id }) { song ->
+                        SongRow(
+                            song = song,
+                            isFavorite = song.id in favoriteIds,
+                            onFavoriteClick = { viewModel.toggleFavorite(song.id) },
+                            onClick = { PlayerConnection.playSongs(songs, songs.indexOf(song)) },
+                        )
+                    }
                 }
+                FastScrollbar(
+                    listState = listState,
+                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                )
             }
         }
+    }
+
+    if (showClearConfirm) {
+        AlertDialog(
+            onDismissRequest = { showClearConfirm = false },
+            title = { Text(stringResource(R.string.favorites_clear)) },
+            text = { Text(stringResource(R.string.favorites_clear_confirm)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.clearFavorites()
+                    showClearConfirm = false
+                }) { Text(stringResource(R.string.common_clear)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearConfirm = false }) { Text(stringResource(R.string.common_cancel)) }
+            },
+        )
     }
 }

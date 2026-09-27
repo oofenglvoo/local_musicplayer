@@ -50,6 +50,20 @@ enum class RepeatMode(val value: Int, @androidx.annotation.StringRes val labelRe
     }
 }
 
+enum class PlayMode(@androidx.annotation.StringRes val labelRes: Int) {
+    SEQUENTIAL(com.localmusic.player.R.string.repeat_off),
+    SHUFFLE(com.localmusic.player.R.string.common_shuffle),
+    REPEAT_ONE(com.localmusic.player.R.string.repeat_one);
+
+    companion object {
+        fun of(shuffle: Boolean, repeat: RepeatMode): PlayMode = when {
+            shuffle -> SHUFFLE
+            repeat == RepeatMode.ONE -> REPEAT_ONE
+            else -> SEQUENTIAL
+        }
+    }
+}
+
 object PlayerConnection {
 
     private var controller: MediaController? = null
@@ -76,6 +90,9 @@ object PlayerConnection {
 
     private val _repeat = MutableStateFlow(RepeatMode.OFF)
     val repeat: StateFlow<RepeatMode> = _repeat.asStateFlow()
+
+    private val _playMode = MutableStateFlow(PlayMode.SEQUENTIAL)
+    val playMode: StateFlow<PlayMode> = _playMode.asStateFlow()
 
     private val _queue = MutableStateFlow<List<QueueItem>>(emptyList())
     val queue: StateFlow<List<QueueItem>> = _queue.asStateFlow()
@@ -147,6 +164,7 @@ object PlayerConnection {
         updateIsPlaying(c.isPlaying)
         _shuffle.value = c.shuffleModeEnabled
         _repeat.value = RepeatMode.from(c.repeatMode)
+        _playMode.value = PlayMode.of(c.shuffleModeEnabled, RepeatMode.from(c.repeatMode))
         _currentIndex.value = c.currentMediaItemIndex
         refreshQueue()
         val item = c.currentMediaItem
@@ -178,6 +196,12 @@ object PlayerConnection {
                 }
             }
         }
+    }
+
+    private fun commitIsPlaying(playing: Boolean) {
+        pauseCommitJob?.cancel()
+        pauseCommitJob = null
+        if (_isPlaying.value != playing) _isPlaying.value = playing
     }
 
     private fun refreshQueue() {
@@ -264,9 +288,13 @@ object PlayerConnection {
 
     fun togglePlayPause() {
         val c = controller ?: return
-        if (c.isPlaying) c.pause() else {
+        if (c.isPlaying) {
+            c.pause()
+            commitIsPlaying(false)
+        } else {
             if (c.playbackState == Player.STATE_IDLE || c.mediaItemCount == 0) return
             c.play()
+            commitIsPlaying(true)
         }
     }
 
@@ -309,6 +337,30 @@ object PlayerConnection {
             RepeatMode.OFF -> Player.REPEAT_MODE_ALL
             RepeatMode.ALL -> Player.REPEAT_MODE_ONE
             RepeatMode.ONE -> Player.REPEAT_MODE_OFF
+        }
+    }
+
+    fun cyclePlayMode() {
+        val c = controller ?: return
+        cyclePlayModeOn(c)
+    }
+
+    fun cyclePlayModeOn(c: MediaController) {
+        val shuffleOn = c.shuffleModeEnabled
+        val repeat = RepeatMode.from(c.repeatMode)
+        when {
+            !shuffleOn && repeat == RepeatMode.OFF -> {
+                c.shuffleModeEnabled = true
+                c.repeatMode = Player.REPEAT_MODE_OFF
+            }
+            shuffleOn -> {
+                c.shuffleModeEnabled = false
+                c.repeatMode = Player.REPEAT_MODE_ONE
+            }
+            else -> {
+                c.shuffleModeEnabled = false
+                c.repeatMode = Player.REPEAT_MODE_OFF
+            }
         }
     }
 

@@ -149,6 +149,7 @@ fun SongsTab(
 }
 
 enum class AutoList(@androidx.annotation.StringRes val labelRes: Int) {
+    ALL_SONGS(com.localmusic.player.R.string.common_all_songs),
     RECENTLY_ADDED(com.localmusic.player.R.string.autolist_recently_added),
     RECENTLY_PLAYED(com.localmusic.player.R.string.autolist_recently_played),
     MOST_PLAYED(com.localmusic.player.R.string.autolist_most_played),

@@ -10,13 +10,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
@@ -38,6 +39,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,6 +57,7 @@ import com.localmusic.player.data.AlbumArtSource
 import com.localmusic.player.data.db.SongEntity
 import com.localmusic.player.playback.PlayerConnection
 import com.localmusic.player.ui.Artwork
+import com.localmusic.player.ui.FastScrollbar
 import com.localmusic.player.ui.library.LibraryViewModel
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.localmusic.player.ui.theme.AppAccent
@@ -89,7 +92,6 @@ fun PlaylistHubScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .statusBarsPadding()
                 .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -113,34 +115,42 @@ fun PlaylistHubScreen(
             }
         }
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            modifier = Modifier.fillMaxWidth().weight(1f),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            item {
-                PlaylistCardItem(
-                    PlaylistCard(stringResource(R.string.playlist_favorites), stringResource(R.string.playlist_favorites_subtitle), favoriteSongs.firstOrNull(), AppAccent, onOpenFavorites),
-                    badge = Icons.Default.Favorite,
-                )
+        val gridState = rememberSaveable(saver = LazyGridState.Saver) { LazyGridState() }
+        Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
+            LazyVerticalGrid(
+                state = gridState,
+                columns = GridCells.Fixed(2),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                item {
+                    PlaylistCardItem(
+                        PlaylistCard(stringResource(R.string.playlist_favorites), stringResource(R.string.playlist_favorites_subtitle), favoriteSongs.firstOrNull(), AppAccent, onOpenFavorites),
+                        badge = Icons.Default.Favorite,
+                    )
+                }
+                items(playlists, key = { it.id }) { playlist ->
+                    val playlistSongs by viewModel.songsInPlaylist(playlist.id)
+                        .collectAsStateWithLifecycle(emptyList())
+                    PlaylistCardItem(
+                        PlaylistCard(
+                            title = playlist.name,
+                            subtitle = stringResource(R.string.playlist_mine),
+                            song = playlistSongs.firstOrNull(),
+                            accent = AppAccent,
+                        ) { onOpenPlaylist(playlist.id) },
+                        onMore = {
+                            renameTarget = playlist.id to playlist.name
+                        },
+                    )
+                }
             }
-            items(playlists, key = { it.id }) { playlist ->
-                val playlistSongs by viewModel.songsInPlaylist(playlist.id)
-                    .collectAsStateWithLifecycle(emptyList())
-                PlaylistCardItem(
-                    PlaylistCard(
-                        title = playlist.name,
-                        subtitle = stringResource(R.string.playlist_mine),
-                        song = playlistSongs.firstOrNull(),
-                        accent = AppAccent,
-                    ) { onOpenPlaylist(playlist.id) },
-                    onMore = {
-                        renameTarget = playlist.id to playlist.name
-                    },
-                )
-            }
+            FastScrollbar(
+                gridState = gridState,
+                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+            )
         }
     }
 

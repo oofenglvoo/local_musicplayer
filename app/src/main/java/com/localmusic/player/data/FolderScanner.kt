@@ -15,6 +15,18 @@ import kotlin.math.abs
 
 object FolderScanner {
 
+    data class ScanProgress(
+        val scanned: Int,
+        val total: Int,
+        val currentName: String,
+    )
+
+    data class ScanResult(
+        val songs: List<SongEntity>,
+        val scanned: Int,
+        val total: Int,
+    )
+
     val AUDIO_EXTENSIONS = setOf(
         "mp3", "flac", "wav", "aac", "m4a", "ogg", "opus", "wma", "ape", "aiff", "mid", "amr",
     )
@@ -63,6 +75,53 @@ object FolderScanner {
             }
         }
         result
+    }
+
+    /**
+     * Scans [root] recursively, reporting per-file progress through [onProgress].
+     * Progress is delivered on the IO dispatcher; callers should marshal to main if needed.
+     */
+    suspend fun scanDirectoryWithProgress(
+        context: Context,
+        root: File,
+        excludedFolders: Set<String> = emptySet(),
+        minDurationSec: Int = 0,
+        onProgress: suspend (ScanProgress) -> Unit,
+    ): ScanResult = withContext(Dispatchers.IO) {
+        val audioFiles = mutableListOf<File>()
+        val excluded = excludedFolders.map { it.trimEnd('/') }.toSet()
+        val stack = ArrayDeque<File>()
+        if (root.isDirectory) stack.add(root)
+        while (stack.isNotEmpty()) {
+            currentCoroutineContext().ensureActive()
+            val dir = stack.removeLast()
+            val children = dir.listFiles() ?: continue
+            for (child in children) {
+                currentCoroutineContext().ensureActive()
+                when {
+                    child.isDirectory -> {
+                        if (!child.name.startsWith(".") && !isExcluded(child, excluded)) {
+                            stack.add(child)
+                        }
+                    }
+                    isAudioFile(child) -> audioFiles += child
+                }
+            }
+        }
+
+        val total = audioFiles.size
+        val result = mutableListOf<SongEntity>()
+        var scanned = 0
+        for (file in audioFiles) {
+            currentCoroutineContext().ensureActive()
+            scanned += 1
+            onProgress(ScanProgress(scanned = scanned, total = total, currentName = file.name))
+            val song = readMetadata(context, file)
+            if (song.duration >= minDurationSec * 1000L) {
+                result += song
+            }
+        }
+        ScanResult(songs = result, scanned = scanned, total = total)
     }
 
     private fun isExcluded(dir: File, excluded: Set<String>): Boolean {

@@ -120,12 +120,10 @@ class MusicRepository @Inject constructor(
     suspend fun refreshLibrary(): Int = refreshMutex.withLock {
         val excluded = settingsStore.excludedFolders.first()
         val minDuration = settingsStore.minDurationSec.first()
-        val fromMediaStore = MediaStoreScanner.scan(context, excluded, minDuration)
-        val fromFolders = scanAllFolders(excluded, minDuration)
-        val merged = mergeSongs(fromMediaStore, fromFolders).distinctBy { it.path }
+        val fromFolders = scanAllFolders(excluded, minDuration).distinctBy { it.path }
         val overrides = settingsStore.artworkOverrides.first()
         val stats = songDao.playStats().associateBy { it.path }
-        val withArtwork = merged.map { song ->
+        val withArtwork = fromFolders.map { song ->
             val override = overrides[song.id]
             val stat = stats[song.path]
             var updated = song
@@ -140,6 +138,48 @@ class MusicRepository @Inject constructor(
     suspend fun rebuildWithFolder(path: String): Int {
         settingsStore.addScannedFolder(path)
         return refreshLibrary()
+    }
+
+    /**
+     * Scans [path] and adds the discovered songs to the global library and to
+     * [playlistId], reporting progress via [onProgress]. Returns the added count.
+     */
+    suspend fun scanFolderIntoPlaylist(
+        playlistId: Long,
+        path: String,
+        onProgress: suspend (FolderScanner.ScanProgress) -> Unit,
+    ): Int = refreshMutex.withLock {
+        val excluded = settingsStore.excludedFolders.first()
+        val minDuration = settingsStore.minDurationSec.first()
+        val dir = java.io.File(path)
+        if (!dir.exists() || !dir.isDirectory) return@withLock 0
+
+        settingsStore.addScannedFolder(path)
+
+        val result = FolderScanner.scanDirectoryWithProgress(
+            context = context,
+            root = dir,
+            excludedFolders = excluded,
+            minDurationSec = minDuration,
+            onProgress = onProgress,
+        )
+
+        val overrides = settingsStore.artworkOverrides.first()
+        val stats = songDao.playStats().associateBy { it.path }
+        val prepared = result.songs.map { song ->
+            val override = overrides[song.id]
+            val stat = stats[song.path]
+            var updated = song
+            if (!override.isNullOrBlank()) updated = updated.copy(artworkPath = override)
+            if (stat != null) updated = updated.copy(playCount = stat.playCount, lastPlayedAt = stat.lastPlayedAt)
+            updated
+        }
+
+        if (prepared.isNotEmpty()) {
+            songDao.upsertAll(prepared)
+            playlistDao.addSongs(playlistId, prepared.map { it.id })
+        }
+        prepared.size
     }
 
     suspend fun removeFolder(path: String) {
@@ -169,23 +209,6 @@ class MusicRepository @Inject constructor(
         return out
     }
 
-    private fun mergeSongs(
-        mediaStore: List<SongEntity>,
-        folders: List<SongEntity>,
-    ): List<SongEntity> {
-        val seenPaths = mediaStore.mapTo(mutableSetOf()) { it.path }
-        val merged = mediaStore.toMutableList()
-        for (song in folders) {
-            if (song.path !in seenPaths) {
-                seenPaths += song.path
-                merged += song
-            }
-        }
-        return merged.sortedWith(
-            compareBy({ it.title.lowercase() }, { it.artist.lowercase() })
-        )
-    }
-
     suspend fun createPlaylist(name: String): Long =
         playlistDao.insertPlaylist(PlaylistEntity(name = name, createdAt = System.currentTimeMillis()))
 
@@ -207,6 +230,8 @@ class MusicRepository @Inject constructor(
     suspend fun toggleFavorite(songId: Long) {
         favoriteDao.toggle(songId, System.currentTimeMillis())
     }
+
+    suspend fun clearFavorites() = favoriteDao.clearAll()
 
     suspend fun recordPlay(songId: Long) {
         val now = System.currentTimeMillis()

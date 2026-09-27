@@ -111,8 +111,7 @@ class PlaybackService : MediaSessionService() {
             val result = super.onConnect(session, controller)
             val sessionCommands = result.availableSessionCommands
                 .buildUpon()
-                .add(COMMAND_TOGGLE_SHUFFLE)
-                .add(COMMAND_CYCLE_REPEAT)
+                .add(COMMAND_CYCLE_PLAY_MODE)
                 .build()
             val playerCommands = result.availablePlayerCommands
             return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
@@ -120,8 +119,7 @@ class PlaybackService : MediaSessionService() {
                 .setAvailablePlayerCommands(playerCommands)
                 .setCustomLayout(
                     listOf(
-                        shuffleButton(session),
-                        repeatButton(session),
+                        playModeButton(session),
                     )
                 )
                 .build()
@@ -134,16 +132,23 @@ class PlaybackService : MediaSessionService() {
             args: android.os.Bundle,
         ): com.google.common.util.concurrent.ListenableFuture<androidx.media3.session.SessionResult> {
             when (customCommand.customAction) {
-                COMMAND_TOGGLE_SHUFFLE.customAction -> {
+                COMMAND_CYCLE_PLAY_MODE.customAction -> {
                     val p = session.player
-                    p.shuffleModeEnabled = !p.shuffleModeEnabled
-                }
-                COMMAND_CYCLE_REPEAT.customAction -> {
-                    val p = session.player
-                    p.repeatMode = when (p.repeatMode) {
-                        Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
-                        Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
-                        else -> Player.REPEAT_MODE_OFF
+                    val shuffleOn = p.shuffleModeEnabled
+                    val repeatOne = p.repeatMode == Player.REPEAT_MODE_ONE
+                    when {
+                        !shuffleOn && !repeatOne -> {
+                            p.shuffleModeEnabled = true
+                            p.repeatMode = Player.REPEAT_MODE_OFF
+                        }
+                        shuffleOn -> {
+                            p.shuffleModeEnabled = false
+                            p.repeatMode = Player.REPEAT_MODE_ONE
+                        }
+                        else -> {
+                            p.shuffleModeEnabled = false
+                            p.repeatMode = Player.REPEAT_MODE_OFF
+                        }
                     }
                 }
             }
@@ -152,31 +157,18 @@ class PlaybackService : MediaSessionService() {
             )
         }
 
-        private fun shuffleButton(session: MediaSession): androidx.media3.session.CommandButton {
+        private fun playModeButton(session: MediaSession): androidx.media3.session.CommandButton {
             val shuffleOn = session.player.shuffleModeEnabled
+            val repeatOne = session.player.repeatMode == Player.REPEAT_MODE_ONE
+            val label = when {
+                shuffleOn -> getString(com.localmusic.player.R.string.common_shuffle)
+                repeatOne -> getString(com.localmusic.player.R.string.repeat_one)
+                else -> getString(com.localmusic.player.R.string.repeat_off)
+            }
             return androidx.media3.session.CommandButton.Builder()
-                .setDisplayName(getString(com.localmusic.player.R.string.common_shuffle))
-                .setIconResId(
-                    if (shuffleOn) android.R.drawable.ic_menu_sort_by_size
-                    else android.R.drawable.ic_menu_sort_by_size
-                )
-                .setSessionCommand(COMMAND_TOGGLE_SHUFFLE)
-                .setEnabled(true)
-                .build()
-        }
-
-        private fun repeatButton(session: MediaSession): androidx.media3.session.CommandButton {
-            val repeatOn = session.player.repeatMode != Player.REPEAT_MODE_OFF
-            return androidx.media3.session.CommandButton.Builder()
-                .setDisplayName(
-                    when (session.player.repeatMode) {
-                        Player.REPEAT_MODE_ONE -> getString(com.localmusic.player.R.string.repeat_one)
-                        Player.REPEAT_MODE_ALL -> getString(com.localmusic.player.R.string.repeat_all)
-                        else -> getString(com.localmusic.player.R.string.repeat_off)
-                    }
-                )
+                .setDisplayName(label)
                 .setIconResId(android.R.drawable.ic_menu_rotate)
-                .setSessionCommand(COMMAND_CYCLE_REPEAT)
+                .setSessionCommand(COMMAND_CYCLE_PLAY_MODE)
                 .setEnabled(true)
                 .build()
         }
@@ -241,9 +233,7 @@ class PlaybackService : MediaSessionService() {
 
     companion object {
         private var attachedSessionId = 0
-        private val COMMAND_TOGGLE_SHUFFLE =
-            androidx.media3.session.SessionCommand("com.localmusic.player.TOGGLE_SHUFFLE", android.os.Bundle.EMPTY)
-        private val COMMAND_CYCLE_REPEAT =
-            androidx.media3.session.SessionCommand("com.localmusic.player.CYCLE_REPEAT", android.os.Bundle.EMPTY)
+        private val COMMAND_CYCLE_PLAY_MODE =
+            androidx.media3.session.SessionCommand("com.localmusic.player.CYCLE_PLAY_MODE", android.os.Bundle.EMPTY)
     }
 }

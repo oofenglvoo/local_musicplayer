@@ -70,8 +70,7 @@ class MusicWidget : GlanceAppWidget() {
 private fun WidgetContent(compact: Boolean, defaultTitle: String, openAppHint: String) {
     val nowPlaying = PlayerConnection.nowPlaying.value
     val isPlaying = PlayerConnection.isPlaying.value
-    val shuffle = PlayerConnection.shuffle.value
-    val repeat = PlayerConnection.repeat.value
+    val playMode = PlayerConnection.playMode.value
 
     val title = if (nowPlaying.isEmpty) defaultTitle else nowPlaying.title
     val subtitle = if (nowPlaying.isEmpty) openAppHint else nowPlaying.artist
@@ -125,12 +124,19 @@ private fun WidgetContent(compact: Boolean, defaultTitle: String, openAppHint: S
         ) {
             if (!compact) {
                 Text(
-                    text = "⤨",
+                    text = when (playMode) {
+                        com.localmusic.player.playback.PlayMode.SHUFFLE -> "⇄"
+                        com.localmusic.player.playback.PlayMode.REPEAT_ONE -> "↻1"
+                        com.localmusic.player.playback.PlayMode.SEQUENTIAL -> "↻"
+                    },
                     modifier = GlanceModifier
                         .padding(4.dp)
-                        .clickable(actionRunCallback<ShuffleAction>()),
+                        .clickable(actionRunCallback<PlayModeAction>()),
                     style = TextStyle(
-                        color = ColorProvider(if (shuffle) Color(0xFFD0BCFF) else Color(0xFF808090)),
+                        color = ColorProvider(
+                            if (playMode == com.localmusic.player.playback.PlayMode.SEQUENTIAL) Color(0xFF808090)
+                            else Color(0xFFD0BCFF)
+                        ),
                         fontSize = 16.sp,
                     ),
                 )
@@ -159,26 +165,6 @@ private fun WidgetContent(compact: Boolean, defaultTitle: String, openAppHint: S
                     .clickable(actionRunCallback<NextAction>()),
                 style = TextStyle(color = ColorProvider(Color.White), fontSize = 18.sp),
             )
-            if (!compact) {
-                Spacer(GlanceModifier.width(12.dp))
-                Text(
-                    text = when (repeat) {
-                        com.localmusic.player.playback.RepeatMode.ONE -> "↻1"
-                        com.localmusic.player.playback.RepeatMode.ALL -> "↻"
-                        else -> "↻"
-                    },
-                    modifier = GlanceModifier
-                        .padding(4.dp)
-                        .clickable(actionRunCallback<RepeatAction>()),
-                    style = TextStyle(
-                        color = ColorProvider(
-                            if (repeat != com.localmusic.player.playback.RepeatMode.OFF) Color(0xFFD0BCFF)
-                            else Color(0xFF808090)
-                        ),
-                        fontSize = 16.sp,
-                    ),
-                )
-            }
         }
     }
 }
@@ -220,32 +206,13 @@ class PrevAction : ActionCallback {
     }
 }
 
-class ShuffleAction : ActionCallback {
+class PlayModeAction : ActionCallback {
     override suspend fun onAction(
         context: Context,
         glanceId: GlanceId,
         parameters: ActionParameters,
     ) {
-        PlayerConnection.runOnMain(context) { it?.let { c -> c.shuffleModeEnabled = !c.shuffleModeEnabled } }
-        refreshWidget(context, glanceId)
-    }
-}
-
-class RepeatAction : ActionCallback {
-    override suspend fun onAction(
-        context: Context,
-        glanceId: GlanceId,
-        parameters: ActionParameters,
-    ) {
-        PlayerConnection.runOnMain(context) { c ->
-            c?.let {
-                it.repeatMode = when (it.repeatMode) {
-                    androidx.media3.common.Player.REPEAT_MODE_OFF -> androidx.media3.common.Player.REPEAT_MODE_ALL
-                    androidx.media3.common.Player.REPEAT_MODE_ALL -> androidx.media3.common.Player.REPEAT_MODE_ONE
-                    else -> androidx.media3.common.Player.REPEAT_MODE_OFF
-                }
-            }
-        }
+        PlayerConnection.runOnMain(context) { c -> c?.let { PlayerConnection.cyclePlayModeOn(it) } }
         refreshWidget(context, glanceId)
     }
 }

@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -55,6 +54,7 @@ import com.localmusic.player.R
 import com.localmusic.player.data.AlbumArtSource
 import com.localmusic.player.playback.PlayerConnection
 import com.localmusic.player.ui.Artwork
+import com.localmusic.player.ui.ScrollableSongList
 import com.localmusic.player.ui.SongArtwork
 import com.localmusic.player.ui.library.LibraryViewModel
 import com.localmusic.player.ui.playlist.FavoritesViewModel
@@ -83,7 +83,7 @@ fun ProfileScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
     ) {
-        Column(modifier = Modifier.statusBarsPadding().padding(20.dp)) {
+        Column(modifier = Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
@@ -337,7 +337,6 @@ fun RecentlyPlayedScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .statusBarsPadding()
                 .padding(horizontal = 8.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -360,7 +359,7 @@ fun RecentlyPlayedScreen(
                 )
             }
         } else {
-            LazyColumn(
+            ScrollableSongList(
                 modifier = Modifier.fillMaxWidth().weight(1f),
                 contentPadding = PaddingValues(bottom = 24.dp),
             ) {
