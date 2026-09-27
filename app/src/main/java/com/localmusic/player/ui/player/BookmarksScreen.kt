@@ -67,6 +67,7 @@ fun BookmarksScreen(
         contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets(0),
                 title = { Text(stringResource(R.string.bookmarks_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {

@@ -60,6 +60,7 @@ fun AudioSettingsScreen(
         contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets(0),
                 title = { Text(stringResource(R.string.audio_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {

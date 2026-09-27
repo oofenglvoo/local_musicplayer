@@ -79,6 +79,7 @@ fun FolderBrowserScreen(
         contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets(0),
                 title = { Text(stringResource(R.string.folder_pick_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {

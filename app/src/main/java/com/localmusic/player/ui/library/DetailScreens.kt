@@ -1,4 +1,4 @@
-﻿package com.localmusic.player.ui.library
+package com.localmusic.player.ui.library
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -48,6 +48,7 @@ fun AutoListScreen(
         contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets(0),
                 title = { Text("${stringResource(kind.labelRes)} · ${songs.size}") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -102,6 +103,7 @@ fun AlbumDetailScreen(
         contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets(0),
                 title = { Text(current?.album ?: stringResource(R.string.library_tab_albums)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -172,6 +174,7 @@ fun ArtistDetailScreen(
         contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets(0),
                 title = { Text(current?.artist ?: stringResource(R.string.library_tab_artists)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -238,6 +241,7 @@ fun FolderDetailScreen(
         contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets(0),
                 title = {
                     Text(
                         folder?.name

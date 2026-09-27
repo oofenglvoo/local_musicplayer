@@ -66,6 +66,7 @@ fun QueueScreen(onBack: () -> Unit) {
         contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets(0),
                 title = { Text(stringResource(R.string.queue_title_count, queue.size)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {

@@ -84,6 +84,7 @@ fun PlaylistDetailScreen(
         contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
+                windowInsets = WindowInsets(0),
                 title = { Text(playlistName.ifBlank { stringResource(R.string.library_tab_playlists) }) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -284,7 +285,8 @@ fun FavoritesScreen(
         contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
-                title = { Text("${stringResource(R.string.playlist_favorites)} 路 ${songs.size}") },
+                windowInsets = WindowInsets(0),
+                title = { Text("${stringResource(R.string.playlist_favorites)} 璺?${songs.size}") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
