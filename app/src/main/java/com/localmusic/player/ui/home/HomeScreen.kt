@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,11 +16,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyGridState
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -62,14 +59,6 @@ import com.localmusic.player.ui.FastScrollbar
 import com.localmusic.player.ui.library.LibraryViewModel
 import com.localmusic.player.ui.playlist.FavoritesViewModel
 import com.localmusic.player.ui.theme.AppAccent
-
-private data class PlaylistCard(
-    val title: String,
-    val subtitle: String,
-    val song: SongEntity?,
-    val accent: Color,
-    val onClick: () -> Unit,
-)
 
 @Composable
 fun HomeScreen(
@@ -130,56 +119,47 @@ fun HomeScreen(
             }
         }
 
-        val gridState = rememberSaveable(saver = LazyGridState.Saver) { LazyGridState() }
+        val gridState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
         Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
-            LazyVerticalGrid(
+            LazyColumn(
                 state = gridState,
-                columns = GridCells.Fixed(2),
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 item {
-                    PlaylistCardItem(
-                        PlaylistCard(
-                            title = stringResource(R.string.common_all_songs),
-                            subtitle = stringResource(R.string.home_all_songs_subtitle),
-                            song = null,
-                            accent = AppAccent,
-                            onClick = onOpenAllSongs,
-                        ),
+                    PlaylistRowItem(
+                        title = stringResource(R.string.common_all_songs),
+                        subtitle = stringResource(R.string.home_all_songs_subtitle),
+                        song = null,
                         badge = Icons.Default.MusicNote,
+                        onClick = onOpenAllSongs,
                     )
                 }
                 item {
-                    PlaylistCardItem(
-                        PlaylistCard(
-                            title = stringResource(R.string.playlist_favorites),
-                            subtitle = stringResource(R.string.playlist_favorites_subtitle),
-                            song = favoriteSongs.firstOrNull(),
-                            accent = AppAccent,
-                            onClick = onOpenFavorites,
-                        ),
+                    PlaylistRowItem(
+                        title = stringResource(R.string.playlist_favorites),
+                        subtitle = stringResource(R.string.playlist_favorites_subtitle),
+                        song = favoriteSongs.firstOrNull(),
                         badge = Icons.Default.Favorite,
+                        onClick = onOpenFavorites,
                     )
                 }
                 items(playlists, key = { it.id }) { playlist ->
                     val playlistSongs by viewModel.songsInPlaylist(playlist.id)
                         .collectAsStateWithLifecycle(emptyList())
-                    PlaylistCardItem(
-                        PlaylistCard(
-                            title = playlist.name,
-                            subtitle = stringResource(R.string.playlist_mine),
-                            song = playlistSongs.firstOrNull(),
-                            accent = AppAccent,
-                        ) { onOpenPlaylist(playlist.id) },
+                    PlaylistRowItem(
+                        title = playlist.name,
+                        subtitle = stringResource(R.string.playlist_mine),
+                        song = playlistSongs.firstOrNull(),
+                        badge = null,
+                        onClick = { onOpenPlaylist(playlist.id) },
                         onMore = { renameTarget = playlist.id to playlist.name },
                     )
                 }
             }
             FastScrollbar(
-                gridState = gridState,
+                listState = gridState,
                 modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
             )
         }
@@ -282,26 +262,36 @@ private fun DialogActionButton(
 }
 
 @Composable
-private fun PlaylistCardItem(
-    card: PlaylistCard,
-    badge: androidx.compose.ui.graphics.vector.ImageVector? = null,
+private fun PlaylistRowItem(
+    title: String,
+    subtitle: String,
+    song: SongEntity?,
+    badge: androidx.compose.ui.graphics.vector.ImageVector?,
+    onClick: () -> Unit,
     onMore: (() -> Unit)? = null,
 ) {
-    Column(modifier = Modifier.clickable(onClick = card.onClick)) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1.15f)
-                .clip(RoundedCornerShape(14.dp))
+                .size(56.dp)
+                .clip(RoundedCornerShape(10.dp))
                 .background(
                     Brush.linearGradient(
-                        listOf(card.accent.copy(alpha = 0.85f), card.accent.copy(alpha = 0.45f)),
+                        listOf(AppAccent.copy(alpha = 0.85f), AppAccent.copy(alpha = 0.45f)),
                     ),
                 ),
+            contentAlignment = Alignment.Center,
         ) {
-            if (card.song != null) {
+            if (song != null) {
                 Artwork(
-                    source = AlbumArtSource(card.song.artworkPath, card.song.albumId),
+                    source = AlbumArtSource(song.artworkPath, song.albumId),
                     modifier = Modifier.fillMaxSize(),
                 )
             } else if (badge != null) {
@@ -309,51 +299,46 @@ private fun PlaylistCardItem(
                     badge,
                     contentDescription = null,
                     tint = Color.White,
-                    modifier = Modifier.align(Alignment.Center).size(48.dp),
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(10.dp)
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(Color.White),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    Icons.Default.PlayArrow,
-                    contentDescription = stringResource(R.string.common_play),
-                    tint = Color.Black,
-                    modifier = Modifier.size(24.dp),
-                )
-            }
-            if (onMore != null) {
-                Icon(
-                    Icons.Default.MoreVert,
-                    contentDescription = stringResource(R.string.playlist_actions),
-                    tint = Color.White,
-                    modifier = Modifier.align(Alignment.TopEnd).padding(10.dp).clickable(onClick = onMore),
+                    modifier = Modifier.size(28.dp),
                 )
             }
         }
-        Spacer(Modifier.height(8.dp))
-        Row {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 12.dp),
+        ) {
             Text(
-                card.title,
+                title,
                 style = MaterialTheme.typography.titleMedium,
                 color = AppAccent,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Spacer(Modifier.size(6.dp))
             Text(
-                card.subtitle,
+                subtitle,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 2,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Icon(
+            Icons.Default.PlayArrow,
+            contentDescription = stringResource(R.string.common_play),
+            tint = AppAccent,
+            modifier = Modifier.size(26.dp),
+        )
+        if (onMore != null) {
+            Icon(
+                Icons.Default.MoreVert,
+                contentDescription = stringResource(R.string.playlist_actions),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .padding(start = 4.dp)
+                    .size(24.dp)
+                    .clickable(onClick = onMore),
             )
         }
     }

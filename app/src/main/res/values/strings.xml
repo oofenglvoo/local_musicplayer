@@ -321,6 +321,7 @@
     <string name="folder_up">上一级</string>
     <string name="folder_scan_current">扫描当前目录</string>
     <string name="folder_scan_to_playlist">扫描此目录并添加到歌单</string>
+    <string name="library_rescanning">正在重新扫描…</string>
     <string name="folder_exclude_current">排除当前目录</string>
     <string name="settings_personalize">个性化你的播放器</string>
     <string name="settings_theme_subtitle">主题、强调色、播放背景与布局</string>

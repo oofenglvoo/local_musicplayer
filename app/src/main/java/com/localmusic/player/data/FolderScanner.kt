@@ -168,9 +168,33 @@ object FolderScanner {
                     ArtworkCache.savePicture(context, path, embedded)
                 }.getOrNull()
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            android.util.Log.w("FolderScanner", "readMetadata failed for $path", e)
         } finally {
             runCatching { retriever.release() }
+        }
+
+        // Fallback: some files (e.g. with an oversized PNG APIC frame) break Android's
+        // MediaMetadataRetriever, which then yields no metadata at all. Parse ID3 directly.
+        if (artist == context.getString(R.string.meta_unknown_artist) || artworkPath == null) {
+            Id3Tags.read(file)?.let { tags ->
+                if (artist == context.getString(R.string.meta_unknown_artist)) {
+                    tags.artist?.takeIf { it.isNotBlank() }?.let { artist = TextRepair.repair(it) }
+                }
+                if (album == context.getString(R.string.meta_unknown_album)) {
+                    tags.album?.takeIf { it.isNotBlank() }?.let { album = TextRepair.repair(it) }
+                }
+                if (title == TextRepair.repair(file.nameWithoutExtension) || title.isBlank()) {
+                    tags.title?.takeIf { it.isNotBlank() }?.let { title = TextRepair.repair(it) }
+                }
+                if (year == 0) tags.year?.let { year = it }
+                if (track == 0) tags.track?.let { track = it }
+                if (artworkPath == null && tags.picture != null) {
+                    artworkPath = runCatching {
+                        ArtworkCache.savePicture(context, path, tags.picture)
+                    }.getOrNull()
+                }
+            }
         }
 
         return SongEntity(

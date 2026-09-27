@@ -2,12 +2,15 @@ package com.localmusic.player.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.localmusic.player.data.MusicRepository
 import com.localmusic.player.data.SettingsStore
 import com.localmusic.player.data.ThemeMode
 import com.localmusic.player.data.BackgroundMode
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -15,7 +18,11 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     val settingsStore: SettingsStore,
+    private val repository: MusicRepository,
 ) : ViewModel() {
+
+    private val _rescanning = MutableStateFlow(false)
+    val rescanning: StateFlow<Boolean> = _rescanning.asStateFlow()
 
     val themeMode: StateFlow<ThemeMode> = settingsStore.themeMode
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ThemeMode.SYSTEM)
@@ -78,5 +85,14 @@ class SettingsViewModel @Inject constructor(
 
     fun removeScannedFolder(path: String) {
         viewModelScope.launch { settingsStore.removeScannedFolder(path) }
+    }
+
+    fun rescanLibrary() {
+        if (_rescanning.value) return
+        _rescanning.value = true
+        viewModelScope.launch {
+            runCatching { repository.refreshLibrary() }
+            _rescanning.value = false
+        }
     }
 }

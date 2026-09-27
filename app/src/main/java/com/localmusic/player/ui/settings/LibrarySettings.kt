@@ -46,6 +46,7 @@ fun LibrarySettingsScreen(
     val minDuration by viewModel.minDurationSec.collectAsStateWithLifecycle()
     val excluded by viewModel.excludedFolders.collectAsStateWithLifecycle()
     val scanned by viewModel.scannedFolders.collectAsStateWithLifecycle()
+    val rescanning by viewModel.rescanning.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -100,6 +101,15 @@ fun LibrarySettingsScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } else {
+                androidx.compose.material3.TextButton(
+                    onClick = { viewModel.rescanLibrary() },
+                    enabled = !rescanning,
+                ) {
+                    Text(
+                        if (rescanning) stringResource(R.string.library_rescanning)
+                        else stringResource(R.string.library_rescan)
+                    )
+                }
                 scanned.forEach { path ->
                     ListItem(
                         headlineContent = { Text(path, maxLines = 1, overflow = TextOverflow.Ellipsis) },
