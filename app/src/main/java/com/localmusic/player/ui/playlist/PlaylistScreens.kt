@@ -286,7 +286,7 @@ fun FavoritesScreen(
         topBar = {
             TopAppBar(
                 windowInsets = WindowInsets(0),
-                title = { Text("${stringResource(R.string.playlist_favorites)} 璺?${songs.size}") },
+                title = { Text("${stringResource(R.string.playlist_favorites)} · ${songs.size}") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
