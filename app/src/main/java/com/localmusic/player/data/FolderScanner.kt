@@ -5,6 +5,7 @@ import android.media.MediaMetadataRetriever
 import android.os.Build
 import com.localmusic.player.R
 import com.localmusic.player.data.db.SongEntity
+import com.localmusic.player.util.TextRepair
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -73,7 +74,7 @@ object FolderScanner {
         context: Context,
         file: File,
     ): SongEntity {
-        var title = file.nameWithoutExtension
+        var title = TextRepair.repair(file.nameWithoutExtension)
         var artist = context.getString(R.string.meta_unknown_artist)
         var album = context.getString(R.string.meta_unknown_album)
         var duration = 0L
@@ -87,11 +88,12 @@ object FolderScanner {
         try {
             retriever.setDataSource(path)
             retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
-                ?.takeIf { it.isNotBlank() }?.let { title = it }
+                ?.takeIf { it.isNotBlank() }?.let { title = TextRepair.repair(it) }
             retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
-                ?.takeIf { it.isNotBlank() && it != "<unknown>" }?.let { artist = it }
+                ?.takeIf { it.isNotBlank() && it != "<unknown>" }
+                ?.let { artist = TextRepair.repair(it) }
             retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM)
-                ?.takeIf { it.isNotBlank() }?.let { album = it }
+                ?.takeIf { it.isNotBlank() }?.let { album = TextRepair.repair(it) }
             retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
                 ?.toLongOrNull()?.let { duration = it }
             retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER)
@@ -124,7 +126,7 @@ object FolderScanner {
             trackNumber = track,
             size = file.length(),
             dateAdded = file.lastModified() / 1000L,
-            displayName = file.name,
+            displayName = TextRepair.repair(file.name),
             mimeType = mimeForExtension(file.extension.lowercase()),
             artworkPath = artworkPath,
             year = year,

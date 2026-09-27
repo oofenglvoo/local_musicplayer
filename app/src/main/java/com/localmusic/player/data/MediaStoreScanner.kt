@@ -6,6 +6,7 @@ import android.os.Build
 import android.provider.MediaStore
 import com.localmusic.player.R
 import com.localmusic.player.data.db.SongEntity
+import com.localmusic.player.util.TextRepair
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -80,15 +81,15 @@ object MediaStoreScanner {
                 val rawTrack = cursor.getInt(trackCol)
                 songs += SongEntity(
                     id = cursor.getLong(idCol),
-                    title = cursor.getString(titleCol)
-                        ?: context.getString(R.string.meta_unknown_song),
-                    artist = if (artist.isNullOrBlank() || artist == "<unknown>") {
-                        context.getString(R.string.meta_unknown_artist)
-                    } else {
-                        artist
-                    },
-                    album = cursor.getString(albumCol)
-                        ?: context.getString(R.string.meta_unknown_album),
+                    title = TextRepair.repair(
+                        cursor.getString(titleCol) ?: ""
+                    ).ifBlank { context.getString(R.string.meta_unknown_song) },
+                    artist = TextRepair.repair(artist.orEmpty())
+                        .takeIf { it.isNotBlank() && it != "<unknown>" }
+                        ?: context.getString(R.string.meta_unknown_artist),
+                    album = TextRepair.repair(
+                        cursor.getString(albumCol) ?: ""
+                    ).ifBlank { context.getString(R.string.meta_unknown_album) },
                     albumId = cursor.getLong(albumIdCol),
                     artistId = 0L,
                     duration = duration,
@@ -96,7 +97,7 @@ object MediaStoreScanner {
                     trackNumber = if (rawTrack > 1000) rawTrack % 1000 else rawTrack,
                     size = cursor.getLong(sizeCol),
                     dateAdded = cursor.getLong(dateCol),
-                    displayName = cursor.getString(nameCol) ?: "",
+                    displayName = TextRepair.repair(cursor.getString(nameCol) ?: ""),
                     mimeType = cursor.getString(mimeCol) ?: "",
                     year = cursor.getInt(yearCol),
                     discNumber = if (rawTrack > 1000) rawTrack / 1000 else 0,
