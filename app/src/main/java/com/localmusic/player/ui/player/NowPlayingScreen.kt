@@ -316,6 +316,7 @@ fun NowPlayingScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 QuickAction(
+                    modifier = Modifier.weight(1f),
                     icon = when (playMode) {
                         PlayMode.SHUFFLE -> Icons.Default.Shuffle
                         PlayMode.REPEAT_ONE -> Icons.Default.RepeatOne
@@ -326,6 +327,7 @@ fun NowPlayingScreen(
                     onClick = { PlayerConnection.cyclePlayMode() },
                 )
                 QuickAction(
+                    modifier = Modifier.weight(1f),
                     icon = Icons.Default.Speed,
                     label = if (speed == 1.0f) stringResource(R.string.now_playing_speed)
                     else "${"%.2f".format(speed).trimEnd('0').trimEnd('.')}x",
@@ -333,12 +335,14 @@ fun NowPlayingScreen(
                     onClick = { showSpeedDialog = true },
                 )
                 QuickAction(
+                    modifier = Modifier.weight(1f),
                     icon = Icons.Default.Bedtime,
                     label = if (sleepActive) sleepRemainingText else stringResource(R.string.now_playing_sleep_timer),
                     active = sleepActive,
                     onClick = { onOpenSleepTimer() },
                 )
                 QuickAction(
+                    modifier = Modifier.weight(1f),
                     icon = Icons.Default.Equalizer,
                     label = stringResource(R.string.now_playing_equalizer),
                     active = false,
@@ -405,13 +409,14 @@ private fun QuickAction(
     label: String,
     active: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
+        modifier = modifier
             .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 6.dp),
+            .padding(horizontal = 4.dp, vertical = 6.dp),
     ) {
         Icon(
             imageVector = icon,
@@ -424,6 +429,9 @@ private fun QuickAction(
             label,
             style = MaterialTheme.typography.labelSmall,
             color = if (active) AppAccent else MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
         )
     }
 }

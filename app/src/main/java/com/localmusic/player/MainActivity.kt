@@ -200,30 +200,7 @@ private fun AppRoot() {
                 color = Color.Transparent,
             ) {
                 PermissionGate(onGranted = {}) {
-                    if (nowPlayingOpen) {
-                        BackHandler { nowPlayingOpen = false }
-                        if (queueOpen) {
-                            BackHandler { queueOpen = false }
-                            QueueScreen(onBack = { queueOpen = false })
-                        } else {
-                            NowPlayingScreen(
-                                onCollapse = { nowPlayingOpen = false },
-                                onOpenQueue = { queueOpen = true },
-                                onOpenBookmarks = { songId ->
-                                    nowPlayingOpen = false
-                                    navController.navigate("bookmarks/$songId")
-                                },
-                                onOpenEqualizer = {
-                                    nowPlayingOpen = false
-                                    navController.navigate("settings/audio")
-                                },
-                                onOpenSleepTimer = {
-                                    nowPlayingOpen = false
-                                    navController.navigate("settings/audio")
-                                },
-                            )
-                        }
-                    } else {
+                    Box(modifier = Modifier.fillMaxSize()) {
                         Column(modifier = Modifier.fillMaxSize()) {
                             Box(modifier = Modifier.weight(1f)) {
                                 NavHost(
@@ -391,6 +368,35 @@ private fun AppRoot() {
                                 }
                             }
                             MiniPlayer(onExpand = { nowPlayingOpen = true })
+                        }
+                        if (nowPlayingOpen) {
+                            Surface(
+                                modifier = Modifier.fillMaxSize(),
+                                color = Color.Transparent,
+                            ) {
+                                BackHandler { nowPlayingOpen = false }
+                                if (queueOpen) {
+                                    BackHandler { queueOpen = false }
+                                    QueueScreen(onBack = { queueOpen = false })
+                                } else {
+                                    NowPlayingScreen(
+                                        onCollapse = { nowPlayingOpen = false },
+                                        onOpenQueue = { queueOpen = true },
+                                        onOpenBookmarks = { songId ->
+                                            nowPlayingOpen = false
+                                            navController.navigate("bookmarks/$songId")
+                                        },
+                                        onOpenEqualizer = {
+                                            nowPlayingOpen = false
+                                            navController.navigate("settings/audio")
+                                        },
+                                        onOpenSleepTimer = {
+                                            nowPlayingOpen = false
+                                            navController.navigate("settings/audio")
+                                        },
+                                    )
+                                }
+                            }
                         }
                     }
                 }
