@@ -121,17 +121,34 @@ object PlayerConnection {
     }
 
     fun connect(context: Context) {
-        if (controller != null) return
+        if (controller != null || connecting) return
         appContext = context.applicationContext
+        connecting = true
         val token = SessionToken(context, ComponentName(context, PlaybackService::class.java))
         val future = MediaController.Builder(context, token).buildAsync()
         future.addListener({
             controller = runCatching { future.get() }.getOrNull()
+            connecting = false
             controller?.addListener(Listener())
             applySpeed(_playbackSpeed.value)
             applySkipSilence(_skipSilence.value)
             syncState()
+            onConnected?.invoke()
+            onConnected = null
         }, MoreExecutors.directExecutor())
+    }
+
+    @Volatile
+    private var connecting = false
+    private var onConnected: (() -> Unit)? = null
+
+    /** Runs [block] on the main thread once the controller is connected (or immediately if already connected). */
+    fun whenConnected(block: () -> Unit) {
+        if (controller != null) {
+            block()
+        } else {
+            onConnected = block
+        }
     }
 
     /**
@@ -410,13 +427,15 @@ object PlayerConnection {
     )
 
     fun restore(songs: List<SongEntity>, index: Int, positionMs: Long, shuffle: Boolean, repeat: Int) {
-        val c = controller ?: return
         if (songs.isEmpty()) return
-        val items = songs.map { it.toMediaItem() }
-        c.setMediaItems(items, index.coerceIn(0, items.lastIndex), positionMs)
-        c.shuffleModeEnabled = shuffle
-        c.repeatMode = repeat
-        c.prepare()
+        whenConnected {
+            val c = controller ?: return@whenConnected
+            val items = songs.map { it.toMediaItem() }
+            c.setMediaItems(items, index.coerceIn(0, items.lastIndex), positionMs)
+            c.shuffleModeEnabled = shuffle
+            c.repeatMode = repeat
+            c.prepare()
+        }
     }
 
     private fun SongEntity.toMediaItem(): MediaItem =
