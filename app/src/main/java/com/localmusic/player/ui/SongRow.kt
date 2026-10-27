@@ -18,6 +18,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -49,12 +51,22 @@ fun SongRow(
     selectionMode: Boolean = false,
     isCurrent: Boolean = false,
 ) {
+    val colors = MaterialTheme.colorScheme
     ListItem(
-        modifier = Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick),
+        modifier = Modifier
+            .drawWithContent {
+                drawContent()
+                // 左侧强调竖条：与底色一起构成"正在播放"的强提示，三种主题下都清晰
+                if (isCurrent) {
+                    drawRect(
+                        color = colors.primary,
+                        size = Size(3.dp.toPx(), size.height),
+                    )
+                }
+            }
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
         colors = if (isCurrent) {
-            ListItemDefaults.colors(
-                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
-            )
+            ListItemDefaults.colors(containerColor = colors.primaryContainer)
         } else {
             ListItemDefaults.colors()
         },
@@ -64,7 +76,7 @@ fun SongRow(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 fontWeight = if (isCurrent) FontWeight.SemiBold else null,
-                color = if (isCurrent) MaterialTheme.colorScheme.primary else Color.Unspecified,
+                color = if (isCurrent) colors.onPrimaryContainer else Color.Unspecified,
             )
         },
         supportingContent = {

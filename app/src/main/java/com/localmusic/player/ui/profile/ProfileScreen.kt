@@ -58,6 +58,7 @@ import com.localmusic.player.ui.ScrollableSongList
 import com.localmusic.player.ui.SongArtwork
 import com.localmusic.player.ui.library.LibraryViewModel
 import com.localmusic.player.ui.playlist.FavoritesViewModel
+import com.localmusic.player.ui.rememberCurrentSongId
 import com.localmusic.player.ui.theme.AppAccent
 import com.localmusic.player.util.toDurationString
 
@@ -328,6 +329,7 @@ fun RecentlyPlayedScreen(
 ) {
     val songs by viewModel.recentlyPlayed.collectAsStateWithLifecycle()
     val favoriteIds by viewModel.favoriteIds.collectAsStateWithLifecycle()
+    val currentSongId = rememberCurrentSongId()
 
     Column(
         modifier = Modifier
@@ -364,9 +366,14 @@ fun RecentlyPlayedScreen(
                 contentPadding = PaddingValues(bottom = 24.dp),
             ) {
                 itemsIndexed(songs, key = { _, s -> s.id }) { index, song ->
+                    val isCurrent = song.id == currentSongId
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .background(
+                                if (isCurrent) MaterialTheme.colorScheme.primaryContainer
+                                else Color.Transparent
+                            )
                             .clickable { PlayerConnection.playSongs(songs, index) }
                             .padding(horizontal = 16.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -381,6 +388,9 @@ fun RecentlyPlayedScreen(
                                 style = MaterialTheme.typography.titleMedium,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
+                                fontWeight = if (isCurrent) FontWeight.SemiBold else null,
+                                color = if (isCurrent) MaterialTheme.colorScheme.onPrimaryContainer
+                                else Color.Unspecified,
                             )
                             Text(
                                 song.artist,
