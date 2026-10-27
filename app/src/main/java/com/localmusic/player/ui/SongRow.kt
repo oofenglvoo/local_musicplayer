@@ -10,16 +10,32 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.localmusic.player.data.db.SongEntity
+import com.localmusic.player.playback.PlayerConnection
 import com.localmusic.player.util.toDurationString
+
+/**
+ * 页面级订阅当前播放歌曲 id，避免每一行 [SongRow] 各自 collect 播放状态。
+ * [PlayerConnection] 的 mediaId 就是 [SongEntity.id]，可直接与列表项比较。
+ */
+@Composable
+fun rememberCurrentSongId(): Long {
+    val nowPlaying by PlayerConnection.nowPlaying.collectAsStateWithLifecycle()
+    return nowPlaying.songId
+}
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
@@ -31,11 +47,25 @@ fun SongRow(
     onLongClick: () -> Unit = {},
     selected: Boolean = false,
     selectionMode: Boolean = false,
+    isCurrent: Boolean = false,
 ) {
     ListItem(
         modifier = Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick),
+        colors = if (isCurrent) {
+            ListItemDefaults.colors(
+                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+            )
+        } else {
+            ListItemDefaults.colors()
+        },
         headlineContent = {
-            Text(song.title, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                song.title,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                fontWeight = if (isCurrent) FontWeight.SemiBold else null,
+                color = if (isCurrent) MaterialTheme.colorScheme.primary else Color.Unspecified,
+            )
         },
         supportingContent = {
             Text(

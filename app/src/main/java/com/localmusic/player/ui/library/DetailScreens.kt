@@ -28,6 +28,7 @@ import com.localmusic.player.data.FolderGroup
 import com.localmusic.player.playback.PlayerConnection
 import com.localmusic.player.ui.ScrollableSongList
 import com.localmusic.player.ui.SongRow
+import com.localmusic.player.ui.rememberCurrentSongId
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,6 +38,7 @@ fun AutoListScreen(
     onBack: () -> Unit,
 ) {
     val favoriteIds by viewModel.favoriteIds.collectAsStateWithLifecycle()
+    val currentSongId = rememberCurrentSongId()
     val songs by when (kind) {
         AutoList.ALL_SONGS -> viewModel.sortedSongs
         AutoList.RECENTLY_ADDED -> viewModel.recentlyAdded
@@ -78,6 +80,7 @@ fun AutoListScreen(
                     SongRow(
                         song = song,
                         isFavorite = song.id in favoriteIds,
+                        isCurrent = song.id == currentSongId,
                         onFavoriteClick = { viewModel.toggleFavorite(song.id) },
                         onClick = { PlayerConnection.playSongs(songs, index) },
                     )
@@ -97,6 +100,7 @@ fun AlbumDetailScreen(
     val album by viewModel.albumByKey(albumKey)
         .collectAsStateWithLifecycle(initialValue = null)
     val favoriteIds by viewModel.favoriteIds.collectAsStateWithLifecycle()
+    val currentSongId = rememberCurrentSongId()
 
     val current = album
     Scaffold(
@@ -148,6 +152,7 @@ fun AlbumDetailScreen(
                     SongRow(
                         song = song,
                         isFavorite = song.id in favoriteIds,
+                        isCurrent = song.id == currentSongId,
                         onFavoriteClick = { viewModel.toggleFavorite(song.id) },
                         onClick = { PlayerConnection.playSongs(current.songs, index) },
                     )
@@ -168,6 +173,7 @@ fun ArtistDetailScreen(
     val artist by viewModel.artistByName(artistName)
         .collectAsStateWithLifecycle(initialValue = null)
     val favoriteIds by viewModel.favoriteIds.collectAsStateWithLifecycle()
+    val currentSongId = rememberCurrentSongId()
 
     val current = artist
     Scaffold(
@@ -215,6 +221,7 @@ fun ArtistDetailScreen(
                     SongRow(
                         song = song,
                         isFavorite = song.id in favoriteIds,
+                        isCurrent = song.id == currentSongId,
                         onFavoriteClick = { viewModel.toggleFavorite(song.id) },
                         onClick = { PlayerConnection.playSongs(current.songs, index) },
                     )
@@ -233,6 +240,7 @@ fun FolderDetailScreen(
 ) {
     val folders by viewModel.folders.collectAsStateWithLifecycle()
     val favoriteIds by viewModel.favoriteIds.collectAsStateWithLifecycle()
+    val currentSongId = rememberCurrentSongId()
     val folderSongs by viewModel.songsInFolder(folderPath)
         .collectAsStateWithLifecycle(emptyList())
     val folder: FolderGroup? = folders.firstOrNull { it.path == folderPath }
@@ -269,6 +277,7 @@ fun FolderDetailScreen(
                     SongRow(
                         song = song,
                         isFavorite = song.id in favoriteIds,
+                        isCurrent = song.id == currentSongId,
                         onFavoriteClick = { viewModel.toggleFavorite(song.id) },
                         onClick = { PlayerConnection.playSongs(folderSongs, index) },
                     )

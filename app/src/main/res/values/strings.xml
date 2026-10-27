@@ -189,6 +189,7 @@
     <!-- 歌单 -->
     <string name="playlist_hub_title">歌单</string>
     <string name="playlist_favorites">我喜欢的音乐</string>
+    <string name="favorites_search_hint">搜索收藏的歌曲</string>
     <string name="playlist_rename">重命名</string>
     <string name="playlist_delete">删除歌单</string>
     <string name="playlist_delete_confirm">确定删除播放列表「%s」吗？</string>

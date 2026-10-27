@@ -1,5 +1,6 @@
 package com.localmusic.player.ui.playlist
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,12 +21,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlaylistPlay
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -41,6 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,6 +53,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.ui.input.pointer.pointerInput
@@ -61,6 +67,7 @@ import com.localmusic.player.data.db.SongEntity
 import com.localmusic.player.playback.PlayerConnection
 import com.localmusic.player.ui.FastScrollbar
 import com.localmusic.player.ui.SongRow
+import com.localmusic.player.ui.rememberCurrentSongId
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,6 +80,7 @@ fun PlaylistDetailScreen(
     val songs by viewModel.songs.collectAsStateWithLifecycle()
     val allSongs by viewModel.allSongs.collectAsStateWithLifecycle()
     val favoriteIds by viewModel.favoriteIds.collectAsStateWithLifecycle()
+    val currentSongId = rememberCurrentSongId()
     val playlistName by viewModel.playlistName.collectAsStateWithLifecycle()
     var reorderMode by remember { mutableStateOf(false) }
     var showAddMenu by remember { mutableStateOf(false) }
@@ -154,6 +162,7 @@ fun PlaylistDetailScreen(
                             SongRow(
                                 song = song,
                                 isFavorite = song.id in favoriteIds,
+                                isCurrent = song.id == currentSongId,
                                 onFavoriteClick = { viewModel.toggleFavorite(song.id) },
                                 onClick = { PlayerConnection.playSongs(songs, songs.indexOf(song)) },
                                 onLongClick = { removeTarget = song },
@@ -279,56 +288,151 @@ fun FavoritesScreen(
 ) {
     val songs by viewModel.songs.collectAsStateWithLifecycle()
     val favoriteIds by viewModel.favoriteIds.collectAsStateWithLifecycle()
+    val currentSongId = rememberCurrentSongId()
     var showClearConfirm by remember { mutableStateOf(false) }
+    var searchActive by rememberSaveable { mutableStateOf(false) }
+    var query by rememberSaveable { mutableStateOf("") }
+    var showMoreMenu by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
+
+    val filtered = remember(songs, query) {
+        val q = query.trim()
+        if (q.isEmpty()) {
+            songs
+        } else {
+            songs.filter {
+                it.title.contains(q, true) || it.artist.contains(q, true) ||
+                    it.album.contains(q, true) || it.displayName.contains(q, true)
+            }
+        }
+    }
+
+    val closeSearch: () -> Unit = {
+        searchActive = false
+        query = ""
+    }
+
+    LaunchedEffect(searchActive) {
+        if (searchActive) focusRequester.requestFocus()
+    }
+
+    BackHandler(enabled = searchActive) { closeSearch() }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
                 windowInsets = WindowInsets(0),
-                title = { Text("${stringResource(R.string.playlist_favorites)} · ${songs.size}") },
+                title = {
+                    if (searchActive) {
+                        OutlinedTextField(
+                            value = query,
+                            onValueChange = { query = it },
+                            placeholder = { Text(stringResource(R.string.favorites_search_hint)) },
+                            singleLine = true,
+                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                            trailingIcon = {
+                                if (query.isNotEmpty()) {
+                                    IconButton(onClick = { query = "" }) {
+                                        Icon(
+                                            Icons.Default.Clear,
+                                            contentDescription = stringResource(R.string.common_clear_input),
+                                        )
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .focusRequester(focusRequester),
+                        )
+                    } else {
+                        Text(
+                            "${stringResource(R.string.playlist_favorites)} · ${songs.size}",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = { if (searchActive) closeSearch() else onBack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 actions = {
-                    if (songs.isNotEmpty()) {
-                        IconButton(onClick = { PlayerConnection.playSongsShuffled(songs) }) {
-                            Icon(Icons.Default.Shuffle, contentDescription = stringResource(R.string.common_shuffle_all))
+                    if (!searchActive && songs.isNotEmpty()) {
+                        IconButton(onClick = { searchActive = true }) {
+                            Icon(Icons.Default.Search, contentDescription = stringResource(R.string.common_search))
                         }
-                        IconButton(onClick = { showClearConfirm = true }) {
-                            Icon(Icons.Default.DeleteSweep, contentDescription = stringResource(R.string.favorites_clear))
+                        Box {
+                            IconButton(onClick = { showMoreMenu = true }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = null)
+                            }
+                            DropdownMenu(
+                                expanded = showMoreMenu,
+                                onDismissRequest = { showMoreMenu = false },
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.common_shuffle_all)) },
+                                    onClick = {
+                                        showMoreMenu = false
+                                        PlayerConnection.playSongsShuffled(songs)
+                                    },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.favorites_clear)) },
+                                    onClick = {
+                                        showMoreMenu = false
+                                        showClearConfirm = true
+                                    },
+                                )
+                            }
                         }
                     }
                 },
             )
         },
     ) { padding ->
-        if (songs.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(stringResource(R.string.playlist_empty), style = MaterialTheme.typography.bodyMedium)
-            }
-        } else {
-            val listState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
-            Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-                LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
-                    items(songs, key = { it.id }) { song ->
-                        SongRow(
-                            song = song,
-                            isFavorite = song.id in favoriteIds,
-                            onFavoriteClick = { viewModel.toggleFavorite(song.id) },
-                            onClick = { PlayerConnection.playSongs(songs, songs.indexOf(song)) },
-                        )
-                    }
+        when {
+            songs.isEmpty() -> {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(stringResource(R.string.playlist_empty), style = MaterialTheme.typography.bodyMedium)
                 }
-                FastScrollbar(
-                    listState = listState,
-                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
-                )
+            }
+            filtered.isEmpty() -> {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        stringResource(R.string.search_no_result, query.trim()),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            else -> {
+                val listState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
+                Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+                    LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
+                        items(filtered, key = { it.id }) { song ->
+                            SongRow(
+                                song = song,
+                                isFavorite = song.id in favoriteIds,
+                                isCurrent = song.id == currentSongId,
+                                onFavoriteClick = { viewModel.toggleFavorite(song.id) },
+                                // 队列保持完整收藏列表，从该曲在完整列表中的位置开始播放
+                                onClick = { PlayerConnection.playSongs(songs, songs.indexOf(song)) },
+                            )
+                        }
+                    }
+                    FastScrollbar(
+                        listState = listState,
+                        modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                    )
+                }
             }
         }
     }

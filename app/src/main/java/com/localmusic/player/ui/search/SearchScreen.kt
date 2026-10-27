@@ -53,6 +53,7 @@ import com.localmusic.player.ui.Artwork
 import com.localmusic.player.ui.ScrollableSongList
 import com.localmusic.player.ui.library.SectionHeader
 import com.localmusic.player.ui.SongRow
+import com.localmusic.player.ui.rememberCurrentSongId
 
 private enum class SearchTab(@androidx.annotation.StringRes val labelRes: Int) {
     SONGS(com.localmusic.player.R.string.search_tab_songs),
@@ -72,6 +73,7 @@ fun SearchScreen(
     val results by viewModel.results.collectAsStateWithLifecycle()
     val history by viewModel.history.collectAsStateWithLifecycle()
     val favoriteIds by viewModel.favorites.collectAsStateWithLifecycle()
+    val currentSongId = rememberCurrentSongId()
     var tab by remember { mutableIntStateOf(0) }
 
     Scaffold(
@@ -145,6 +147,7 @@ fun SearchScreen(
                                 SongRow(
                                     song = song,
                                     isFavorite = song.id in favoriteIds,
+                                    isCurrent = song.id == currentSongId,
                                     onFavoriteClick = { viewModel.toggleFavorite(song.id) },
                                     onClick = {
                                         viewModel.commitSearch(query)
