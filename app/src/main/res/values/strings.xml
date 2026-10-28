@@ -190,6 +190,8 @@
     <string name="playlist_hub_title">歌单</string>
     <string name="playlist_favorites">我喜欢的音乐</string>
     <string name="favorites_search_hint">搜索收藏的歌曲</string>
+    <string name="playlist_search_hint">搜索歌单中的歌曲</string>
+    <string name="list_search_hint">搜索本列表</string>
     <string name="playlist_rename">重命名</string>
     <string name="playlist_delete">删除歌单</string>
     <string name="playlist_delete_confirm">确定删除播放列表「%s」吗？</string>
@@ -197,6 +199,8 @@
     <string name="playlist_empty">这个歌单还没有歌曲</string>
     <string name="playlist_add_songs">添加歌曲</string>
     <string name="playlist_remove_from">从歌单移除</string>
+    <string name="playlist_reorder">调整歌曲顺序</string>
+    <string name="playlist_reorder_exit">完成排序</string>
     <string name="playlist_remove_confirm">从当前歌单移除 %d 首歌曲？</string>
     <string name="playlist_new">新建播放列表</string>
     <string name="playlist_name_hint">播放列表名称</string>

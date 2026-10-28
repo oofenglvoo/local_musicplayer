@@ -67,7 +67,11 @@ import com.localmusic.player.data.db.SongEntity
 import com.localmusic.player.playback.PlayerConnection
 import com.localmusic.player.ui.FastScrollbar
 import com.localmusic.player.ui.SongRow
+import com.localmusic.player.ui.SongSearchAction
+import com.localmusic.player.ui.SongSearchField
+import com.localmusic.player.ui.filterSongs
 import com.localmusic.player.ui.rememberCurrentSongId
+import com.localmusic.player.ui.rememberSongSearchState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,87 +87,131 @@ fun PlaylistDetailScreen(
     val currentSongId = rememberCurrentSongId()
     val playlistName by viewModel.playlistName.collectAsStateWithLifecycle()
     var reorderMode by remember { mutableStateOf(false) }
-    var showAddMenu by remember { mutableStateOf(false) }
     var removeTarget by remember { mutableStateOf<SongEntity?>(null) }
     var showAddSongs by remember { mutableStateOf(false) }
     var selectedIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    val search = rememberSongSearchState()
+    var showMoreMenu by remember { mutableStateOf(false) }
+    val filtered = remember(songs, search.query) { filterSongs(songs, search.query) }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
                 windowInsets = WindowInsets(0),
-                title = { Text(playlistName.ifBlank { stringResource(R.string.library_tab_playlists) }) },
+                title = {
+                    if (search.active) {
+                        SongSearchField(
+                            state = search,
+                            placeholder = stringResource(R.string.playlist_search_hint),
+                        )
+                    } else {
+                        Text(
+                            playlistName.ifBlank { stringResource(R.string.library_tab_playlists) },
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = { if (search.active) search.close() else onBack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.playAll() }) {
-                        Icon(Icons.Default.PlaylistPlay, contentDescription = stringResource(R.string.common_play_all))
-                    }
-                    IconButton(onClick = { viewModel.shufflePlay() }) {
-                        Icon(Icons.Default.Shuffle, contentDescription = stringResource(R.string.common_shuffle_all))
-                    }
-                    Box {
-                        IconButton(onClick = { showAddMenu = true }) {
-                            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.playlist_add_songs))
+                    if (!search.active) {
+                        SongSearchAction(state = search, enabled = songs.isNotEmpty())
+                        if (songs.isNotEmpty()) {
+                            IconButton(onClick = { viewModel.playAll() }) {
+                                Icon(Icons.Default.PlaylistPlay, contentDescription = stringResource(R.string.common_play_all))
+                            }
+                            IconButton(onClick = { viewModel.shufflePlay() }) {
+                                Icon(Icons.Default.Shuffle, contentDescription = stringResource(R.string.common_shuffle_all))
+                            }
+                            Box {
+                                IconButton(onClick = { showMoreMenu = true }) {
+                                    Icon(Icons.Default.MoreVert, contentDescription = null)
+                                }
+                                DropdownMenu(
+                                    expanded = showMoreMenu,
+                                    onDismissRequest = { showMoreMenu = false },
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.playlist_scan_folder)) },
+                                        onClick = {
+                                            showMoreMenu = false
+                                            onAddSongs()
+                                        },
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.playlist_add_from_library)) },
+                                        onClick = {
+                                            showMoreMenu = false
+                                            selectedIds = emptySet()
+                                            showAddSongs = true
+                                        },
+                                    )
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                stringResource(
+                                                    if (reorderMode) R.string.playlist_reorder_exit
+                                                    else R.string.playlist_reorder
+                                                )
+                                            )
+                                        },
+                                        onClick = {
+                                            showMoreMenu = false
+                                            reorderMode = !reorderMode
+                                        },
+                                    )
+                                }
+                            }
                         }
-                        DropdownMenu(expanded = showAddMenu, onDismissRequest = { showAddMenu = false }) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.playlist_scan_folder)) },
-                                onClick = {
-                                    showAddMenu = false
-                                    onAddSongs()
-                                },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.playlist_add_from_library)) },
-                                onClick = {
-                                    showAddMenu = false
-                                    selectedIds = emptySet()
-                                    showAddSongs = true
-                                },
-                            )
-                        }
-                    }
-                    IconButton(onClick = { reorderMode = !reorderMode }) {
-                        Icon(
-                            Icons.Default.DragHandle,
-                            contentDescription = null,
-                            tint = if (reorderMode) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
                     }
                 },
             )
         },
     ) { padding ->
-        if (songs.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(stringResource(R.string.playlist_empty), style = MaterialTheme.typography.bodyMedium)
+        when {
+            songs.isEmpty() -> {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(stringResource(R.string.playlist_empty), style = MaterialTheme.typography.bodyMedium)
+                }
             }
-        } else {
-            if (reorderMode) {
+            filtered.isEmpty() -> {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        stringResource(R.string.search_no_result, search.query.trim()),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            reorderMode && !search.active -> {
                 ReorderableSongList(
                     songs = songs,
                     modifier = Modifier.fillMaxSize().padding(padding),
                     onMove = { from, to -> viewModel.move(from, to) },
                 )
-            } else {
+            }
+            else -> {
                 val listState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
                 Box(modifier = Modifier.fillMaxSize().padding(padding)) {
                     LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
-                        items(songs, key = { it.id }) { song ->
+                        items(filtered, key = { it.id }) { song ->
                             SongRow(
                                 song = song,
                                 isFavorite = song.id in favoriteIds,
                                 isCurrent = song.id == currentSongId,
                                 onFavoriteClick = { viewModel.toggleFavorite(song.id) },
+                                // 队列保持歌单完整顺序，从该曲在完整列表中的位置开始播放
                                 onClick = { PlayerConnection.playSongs(songs, songs.indexOf(song)) },
                                 onLongClick = { removeTarget = song },
                             )
@@ -290,33 +338,9 @@ fun FavoritesScreen(
     val favoriteIds by viewModel.favoriteIds.collectAsStateWithLifecycle()
     val currentSongId = rememberCurrentSongId()
     var showClearConfirm by remember { mutableStateOf(false) }
-    var searchActive by rememberSaveable { mutableStateOf(false) }
-    var query by rememberSaveable { mutableStateOf("") }
     var showMoreMenu by remember { mutableStateOf(false) }
-    val focusRequester = remember { FocusRequester() }
-
-    val filtered = remember(songs, query) {
-        val q = query.trim()
-        if (q.isEmpty()) {
-            songs
-        } else {
-            songs.filter {
-                it.title.contains(q, true) || it.artist.contains(q, true) ||
-                    it.album.contains(q, true) || it.displayName.contains(q, true)
-            }
-        }
-    }
-
-    val closeSearch: () -> Unit = {
-        searchActive = false
-        query = ""
-    }
-
-    LaunchedEffect(searchActive) {
-        if (searchActive) focusRequester.requestFocus()
-    }
-
-    BackHandler(enabled = searchActive) { closeSearch() }
+    val search = rememberSongSearchState()
+    val filtered = remember(songs, search.query) { filterSongs(songs, search.query) }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0),
@@ -324,26 +348,10 @@ fun FavoritesScreen(
             TopAppBar(
                 windowInsets = WindowInsets(0),
                 title = {
-                    if (searchActive) {
-                        OutlinedTextField(
-                            value = query,
-                            onValueChange = { query = it },
-                            placeholder = { Text(stringResource(R.string.favorites_search_hint)) },
-                            singleLine = true,
-                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                            trailingIcon = {
-                                if (query.isNotEmpty()) {
-                                    IconButton(onClick = { query = "" }) {
-                                        Icon(
-                                            Icons.Default.Clear,
-                                            contentDescription = stringResource(R.string.common_clear_input),
-                                        )
-                                    }
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .focusRequester(focusRequester),
+                    if (search.active) {
+                        SongSearchField(
+                            state = search,
+                            placeholder = stringResource(R.string.favorites_search_hint),
                         )
                     } else {
                         Text(
@@ -354,37 +362,37 @@ fun FavoritesScreen(
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = { if (searchActive) closeSearch() else onBack() }) {
+                    IconButton(onClick = { if (search.active) search.close() else onBack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 actions = {
-                    if (!searchActive && songs.isNotEmpty()) {
-                        IconButton(onClick = { searchActive = true }) {
-                            Icon(Icons.Default.Search, contentDescription = stringResource(R.string.common_search))
-                        }
-                        Box {
-                            IconButton(onClick = { showMoreMenu = true }) {
-                                Icon(Icons.Default.MoreVert, contentDescription = null)
-                            }
-                            DropdownMenu(
-                                expanded = showMoreMenu,
-                                onDismissRequest = { showMoreMenu = false },
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.common_shuffle_all)) },
-                                    onClick = {
-                                        showMoreMenu = false
-                                        PlayerConnection.playSongsShuffled(songs)
-                                    },
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.favorites_clear)) },
-                                    onClick = {
-                                        showMoreMenu = false
-                                        showClearConfirm = true
-                                    },
-                                )
+                    if (!search.active) {
+                        SongSearchAction(state = search, enabled = songs.isNotEmpty())
+                        if (songs.isNotEmpty()) {
+                            Box {
+                                IconButton(onClick = { showMoreMenu = true }) {
+                                    Icon(Icons.Default.MoreVert, contentDescription = null)
+                                }
+                                DropdownMenu(
+                                    expanded = showMoreMenu,
+                                    onDismissRequest = { showMoreMenu = false },
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.common_shuffle_all)) },
+                                        onClick = {
+                                            showMoreMenu = false
+                                            PlayerConnection.playSongsShuffled(songs)
+                                        },
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.favorites_clear)) },
+                                        onClick = {
+                                            showMoreMenu = false
+                                            showClearConfirm = true
+                                        },
+                                    )
+                                }
                             }
                         }
                     }
@@ -407,7 +415,7 @@ fun FavoritesScreen(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        stringResource(R.string.search_no_result, query.trim()),
+                        stringResource(R.string.search_no_result, search.query.trim()),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

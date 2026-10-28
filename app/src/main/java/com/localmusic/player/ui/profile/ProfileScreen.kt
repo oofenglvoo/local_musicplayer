@@ -56,9 +56,13 @@ import com.localmusic.player.playback.PlayerConnection
 import com.localmusic.player.ui.Artwork
 import com.localmusic.player.ui.ScrollableSongList
 import com.localmusic.player.ui.SongArtwork
+import com.localmusic.player.ui.SongSearchAction
+import com.localmusic.player.ui.SongSearchField
+import com.localmusic.player.ui.filterSongs
 import com.localmusic.player.ui.library.LibraryViewModel
 import com.localmusic.player.ui.playlist.FavoritesViewModel
 import com.localmusic.player.ui.rememberCurrentSongId
+import com.localmusic.player.ui.rememberSongSearchState
 import com.localmusic.player.ui.theme.AppAccent
 import com.localmusic.player.util.toDurationString
 
@@ -330,6 +334,8 @@ fun RecentlyPlayedScreen(
     val songs by viewModel.recentlyPlayed.collectAsStateWithLifecycle()
     val favoriteIds by viewModel.favoriteIds.collectAsStateWithLifecycle()
     val currentSongId = rememberCurrentSongId()
+    val search = rememberSongSearchState()
+    val filtered = remember(songs, search.query) { filterSongs(songs, search.query) }
 
     Column(
         modifier = Modifier
@@ -342,69 +348,91 @@ fun RecentlyPlayedScreen(
                 .padding(horizontal = 8.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = onBack) {
+            IconButton(onClick = { if (search.active) search.close() else onBack() }) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
             }
-            Text(
-                stringResource(R.string.profile_recently_played),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-            )
+            if (search.active) {
+                SongSearchField(
+                    state = search,
+                    placeholder = stringResource(R.string.list_search_hint),
+                    modifier = Modifier.weight(1f),
+                )
+            } else {
+                Text(
+                    stringResource(R.string.profile_recently_played),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                SongSearchAction(state = search, enabled = songs.isNotEmpty())
+            }
         }
 
-        if (songs.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        when {
+            songs.isEmpty() -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
                     stringResource(R.string.profile_no_history),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-        } else {
-            ScrollableSongList(
-                modifier = Modifier.fillMaxWidth().weight(1f),
-                contentPadding = PaddingValues(bottom = 24.dp),
-            ) {
-                itemsIndexed(songs, key = { _, s -> s.id }) { index, song ->
-                    val isCurrent = song.id == currentSongId
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(
-                                if (isCurrent) MaterialTheme.colorScheme.primaryContainer
-                                else Color.Transparent
+            filtered.isEmpty() -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(
+                    stringResource(R.string.search_no_result, search.query.trim()),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            else -> {
+                ScrollableSongList(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    contentPadding = PaddingValues(bottom = 24.dp),
+                ) {
+                    itemsIndexed(filtered, key = { _, s -> s.id }) { _, song ->
+                        val isCurrent = song.id == currentSongId
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    if (isCurrent) MaterialTheme.colorScheme.primaryContainer
+                                    else Color.Transparent
+                                )
+                                .clickable {
+                                    PlayerConnection.playSongs(songs, songs.indexOf(song))
+                                }
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            SongArtwork(
+                                song = song,
+                                modifier = Modifier.size(52.dp).clip(RoundedCornerShape(10.dp)),
                             )
-                            .clickable { PlayerConnection.playSongs(songs, index) }
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        SongArtwork(
-                            song = song,
-                            modifier = Modifier.size(52.dp).clip(RoundedCornerShape(10.dp)),
-                        )
-                        Column(modifier = Modifier.weight(1f).padding(horizontal = 12.dp)) {
+                            Column(modifier = Modifier.weight(1f).padding(horizontal = 12.dp)) {
+                                Text(
+                                    song.title,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    fontWeight = if (isCurrent) FontWeight.SemiBold else null,
+                                    color = if (isCurrent) MaterialTheme.colorScheme.onPrimaryContainer
+                                    else Color.Unspecified,
+                                )
+                                Text(
+                                    song.artist,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
                             Text(
-                                song.title,
-                                style = MaterialTheme.typography.titleMedium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                fontWeight = if (isCurrent) FontWeight.SemiBold else null,
-                                color = if (isCurrent) MaterialTheme.colorScheme.onPrimaryContainer
-                                else Color.Unspecified,
-                            )
-                            Text(
-                                song.artist,
-                                style = MaterialTheme.typography.bodyMedium,
+                                song.duration.toDurationString(),
+                                style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
                             )
                         }
-                        Text(
-                            song.duration.toDurationString(),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
                     }
                 }
             }
