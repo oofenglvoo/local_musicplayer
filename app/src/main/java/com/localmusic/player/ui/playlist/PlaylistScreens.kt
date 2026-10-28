@@ -91,6 +91,7 @@ fun PlaylistDetailScreen(
     var showAddSongs by remember { mutableStateOf(false) }
     var selectedIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
     val search = rememberSongSearchState()
+    var showAddMenu by remember { mutableStateOf(false) }
     var showMoreMenu by remember { mutableStateOf(false) }
     val filtered = remember(songs, search.query) { filterSongs(songs, search.query) }
 
@@ -121,6 +122,31 @@ fun PlaylistDetailScreen(
                 actions = {
                     if (!search.active) {
                         SongSearchAction(state = search, enabled = songs.isNotEmpty())
+                        Box {
+                            IconButton(onClick = { showAddMenu = true }) {
+                                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.playlist_add_songs))
+                            }
+                            DropdownMenu(
+                                expanded = showAddMenu,
+                                onDismissRequest = { showAddMenu = false },
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.playlist_scan_folder)) },
+                                    onClick = {
+                                        showAddMenu = false
+                                        onAddSongs()
+                                    },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.playlist_add_from_library)) },
+                                    onClick = {
+                                        showAddMenu = false
+                                        selectedIds = emptySet()
+                                        showAddSongs = true
+                                    },
+                                )
+                            }
+                        }
                         if (songs.isNotEmpty()) {
                             IconButton(onClick = { viewModel.playAll() }) {
                                 Icon(Icons.Default.PlaylistPlay, contentDescription = stringResource(R.string.common_play_all))
@@ -136,21 +162,6 @@ fun PlaylistDetailScreen(
                                     expanded = showMoreMenu,
                                     onDismissRequest = { showMoreMenu = false },
                                 ) {
-                                    DropdownMenuItem(
-                                        text = { Text(stringResource(R.string.playlist_scan_folder)) },
-                                        onClick = {
-                                            showMoreMenu = false
-                                            onAddSongs()
-                                        },
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text(stringResource(R.string.playlist_add_from_library)) },
-                                        onClick = {
-                                            showMoreMenu = false
-                                            selectedIds = emptySet()
-                                            showAddSongs = true
-                                        },
-                                    )
                                     DropdownMenuItem(
                                         text = {
                                             Text(
@@ -175,11 +186,18 @@ fun PlaylistDetailScreen(
     ) { padding ->
         when {
             songs.isEmpty() -> {
-                Box(
+                Column(
                     modifier = Modifier.fillMaxSize().padding(padding),
-                    contentAlignment = Alignment.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
                 ) {
                     Text(stringResource(R.string.playlist_empty), style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        stringResource(R.string.playlist_empty_hint),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
                 }
             }
             filtered.isEmpty() -> {

@@ -197,6 +197,7 @@
     <string name="playlist_delete_confirm">确定删除播放列表「%s」吗？</string>
     <string name="playlist_song_count">%d 首</string>
     <string name="playlist_empty">这个歌单还没有歌曲</string>
+    <string name="playlist_empty_hint">点击右上角 + 添加歌曲</string>
     <string name="playlist_add_songs">添加歌曲</string>
     <string name="playlist_remove_from">从歌单移除</string>
     <string name="playlist_reorder">调整歌曲顺序</string>
